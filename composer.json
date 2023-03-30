@@ -1,5 +1,5 @@
 {
-    "name": "sbublies/gridtocontainer",
+    "name": "macopedia/gridtocontainer",
     "type": "typo3-cms-extension",
     "license": "GPL-2.0-or-later",
     "description": "EXT:gridtocontainer is a small migration extension with backend module for those who want to switch from EXT:gridelements to EXT:container.",
