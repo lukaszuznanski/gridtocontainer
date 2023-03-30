@@ -7,14 +7,13 @@
         {
             "name": "Stefan Bublies",
             "role": "Developer"
+        },
+        {
+            "name": "Daniel Piętka",
+            "role": "Developer"
         }
     ],
-	"support": {
-		"docs": "https://docs.typo3.org/p/sbublies/gridtocontainer/main/en-us/",
-		"issues": "https://gitlab.com/bartista87/gridtocontainer/-/issues",
-		"source": "https://gitlab.com/bartista87/gridtocontainer"
-	},
-    "version": "11.4.6",
+    "version": "1.0.0",
     "require": {
         "typo3/cms-core": "^11.5"
     }
@@ -27,18 +26,15 @@
             "SBublies\\Gridtocontainer\\": "Classes"
         }
     },
-    "autoload-dev": {
-        "psr-4": {
-            "SBublies\\Gridtocontainer\\Tests\\": "Tests"
-        }
-    },
-    "replace": {
-        "typo3-ter/gridtocontainer": "self.version"
-    },
     "extra": {
         "typo3/cms": {
             "extension-key": "gridtocontainer"
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "typo3/cms-composer-installers": true,
+            "typo3/class-alias-loader": true
+        }
     }
 }
-
