@@ -1,0 +1,44 @@
+{
+    "name": "sbublies/gridtocontainer",
+    "type": "typo3-cms-extension",
+    "license": "GPL-2.0-or-later",
+    "description": "EXT:gridtocontainer is a small migration extension with backend module for those who want to switch from EXT:gridelements to EXT:container.",
+    "authors": [
+        {
+            "name": "Stefan Bublies",
+            "role": "Developer"
+        }
+    ],
+	"support": {
+		"docs": "https://docs.typo3.org/p/sbublies/gridtocontainer/main/en-us/",
+		"issues": "https://gitlab.com/bartista87/gridtocontainer/-/issues",
+		"source": "https://gitlab.com/bartista87/gridtocontainer"
+	},
+    "version": "11.4.6",
+    "require": {
+        "typo3/cms-core": "^11.5"
+    }
+    ,
+    "require-dev": {
+        "roave/security-advisories": "dev-latest"
+    },
+    "autoload": {
+        "psr-4": {
+            "SBublies\\Gridtocontainer\\": "Classes"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SBublies\\Gridtocontainer\\Tests\\": "Tests"
+        }
+    },
+    "replace": {
+        "typo3-ter/gridtocontainer": "self.version"
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "gridtocontainer"
+        }
+    }
+}
+

@@ -1,0 +1,18 @@
+<html data-namespace-typo3-fluid="true"
+      xmlns:f="http://typo3.org/ns/TYPO3/Fluid/ViewHelpers"
+      f:schemaLocation="https://fluidtypo3.org/schemas/fluid-master.xsd">
+
+		<h1><f:format.raw>{f:translate(key: 'migrate.header')}</f:format.raw></h1>
+
+
+		<div class="progress">
+			<div class="progress-bar" role="progressbar" style="width: {progress}%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+
+				<f:if condition="{step} == 1">{f:translate(key: 'migrate.stepone')}</f:if>
+				<f:if condition="{step} == 2">{f:translate(key: 'migrate.steptwo')}</f:if>
+				<f:if condition="{step} == 3">{f:translate(key: 'migrate.stepthree')}</f:if>
+
+			</div>
+		</div>
+
+</html>

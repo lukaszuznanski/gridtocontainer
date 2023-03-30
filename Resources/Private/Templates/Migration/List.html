@@ -1,0 +1,66 @@
+<html data-namespace-typo3-fluid="true"
+      xmlns:f="http://typo3.org/ns/TYPO3/Fluid/ViewHelpers"
+      f:schemaLocation="https://fluidtypo3.org/schemas/fluid-master.xsd">
+<f:layout name="Default" />
+
+<f:section name="content">
+
+	<f:render partial="Migration/Header" arguments="{progress:37, step:1}" />
+
+	<f:be.infobox title="{f:translate(key: 'migrate.stepone.info.header')}" state="-1"><f:format.raw>{f:translate(key: 'migrate.stepone.info.body')}</f:format.raw></f:be.infobox>
+
+	<f:be.infobox title="{f:translate(key: 'migrate.stepone.notice.header')}" state="1"><f:format.raw>{f:translate(key: 'migrate.stepone.notice.body')}</f:format.raw><f:link.action action="analyse" class="btn btn-link">{f:translate(key: 'migrate.stepone.notice.body.link.label')}</f:link.action></f:be.infobox>
+
+	<h2>{f:translate(key: 'migrate.stepone.h2')}</h2>
+
+	<p>{f:translate(key: 'migrate.stepone.all')}<f:link.action action="migrategeneral" class="btn btn-link">{f:translate(key: 'migrate.stepone.notice.body.link.label')}</f:link.action></p>
+
+
+	<f:form action="process" name="migration" method="POST">
+
+		<f:for each="{gridelementsElements}" as="element" iteration="iter">
+			<div class="migration-element typo3-TCEforms">
+				<div class="tab-content">
+					<fieldset class="form-section">
+						<span class="migration-number">{iter.cycle}</span>
+						<f:if condition="{element.header}">
+							<f:then>
+								<h4><strong>{element.header}</strong> <f:format.raw>{f:translate(key: 'migrate.container.label')}</f:format.raw></h4><f:if condition="{element.hidden} == 1"><small>{f:translate(key: 'migrate.hidden')}</small><br></f:if>
+								<br>
+							</f:then>
+							<f:else>
+								<h4><strong>{f:translate(key: 'migrate.ce.notitle')}</strong> <f:format.raw>{f:translate(key: 'migrate.container.label')}</f:format.raw></h4><f:if condition="{element.hidden} == 1"><small>{f:translate(key: 'migrate.hidden')}</small><br></f:if>
+								<br>
+							</f:else>
+						</f:if>
+						<div class="form-group">
+							<f:form.checkbox id="uid-{element.uid}" property="elements.uid-{element.uid}" value="{element.uid}" />
+							<label for="uid-{element.uid}">{element.tx_gridelements_backend_layout}</label>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+		</f:for>
+		<div class="form-group">
+			<f:form.checkbox id="select-all" value="0"/>
+			<label for="select-all">{f:translate(key: 'migrate.selectall')}</label>
+		</div>
+		<div class="form-group">
+			<f:form.submit class="btn btn-primary" value="{f:translate(key: 'migrate.submit.analyse')}" />
+			<br><br>
+		</div>
+
+	</f:form>
+
+	<script>
+	  document.getElementById('select-all').onclick = function() {
+		  var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+		  for (var checkbox of checkboxes) {
+			  checkbox.checked = this.checked;
+		  }
+	  }
+	</script>
+
+</f:section>
+
+</html>

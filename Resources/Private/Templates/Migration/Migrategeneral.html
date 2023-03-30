@@ -1,0 +1,53 @@
+<html data-namespace-typo3-fluid="true"
+      xmlns:f="http://typo3.org/ns/TYPO3/Fluid/ViewHelpers"
+      f:schemaLocation="https://fluidtypo3.org/schemas/fluid-master.xsd">
+<f:layout name="Default" />
+
+<f:section name="content">
+	<f:render partial="Migration/Header" arguments="{progress:37, step:1}" />
+	<h2><f:format.raw>{f:translate(key: 'migrate.analyse.grid.header')}</f:format.raw></h2>
+	<f:be.infobox title="{f:translate(key: 'migrate.migrategeneral.info.header')}" state="-1"><f:format.raw>{f:translate(key: 'migrate.migrategeneral.info.body')}</f:format.raw></f:be.infobox>
+	<f:be.infobox title="{f:translate(key: 'migrate.stepone.notice.header')}" state="1"><f:format.raw>{f:translate(key: 'migrate.stepone.notice.body')}</f:format.raw><f:link.action action="analyse" class="btn btn-link">{f:translate(key: 'migrate.stepone.notice.body.link.label')}</f:link.action></f:be.infobox>
+	<f:form action="migrateprocess" name="migrategeneral" method="POST">
+		<div class="typo3-TCEforms">
+			<div class="tab-content">
+				<f:for each="{gridelementsElements}" as="element">
+					<fieldset class="form-section">
+						<div class="form-group">
+							<f:form.checkbox id="layout-{element.tx_gridelements_backend_layout}" property="elements.{element.tx_gridelements_backend_layout}.active" value="1" />
+							<label for="layout-{element.tx_gridelements_backend_layout}">{f:translate(key: 'migrate.analyse.grid.label')} {element.tx_gridelements_backend_layout}</label>
+						</div>
+						<strong>{f:translate(key: 'migrate.analyse.grid.siteid.label')}</strong> {element.pid}<br>
+							<f:for each="{layoutColumns}" as="columns" key="backendLayoutName">
+								<f:if condition="{backendLayoutName} == {element.tx_gridelements_backend_layout}">
+									<f:for each="{columns}" as="column" key="columnId">
+										<div>
+											<strong>{f:translate(key: 'migrate.all.columns')}</strong> {columnId}<br>
+											<div class="form-group col-md-6">
+												<label for="columnid-{backendLayoutName}-{columnId}">{f:translate(key: 'migrate.newcolumn')} </label>
+												<f:form.textfield class="form-control js-columnId" additionalAttributes="{data-checkbox: 'sameCid-{backendLayoutName}-{columnId}'}" id="columnid-{backendLayoutName}-{columnId}" property="elements.{backendLayoutName}.columns.{columnId}.columnid" />
+											</div>
+											<div class="form-group col-md-6">
+												<f:form.checkbox id="sameCid-{backendLayoutName}-{columnId}" property="elements.{backendLayoutName}.columns.{columnId}.sameCid" value="{columnId}" checked="1" />
+												<label for="sameCid-{backendLayoutName}-{columnId}">{f:translate(key: 'migrate.samecolumn')}</label>
+											</div>
+										</div><br><br><br><br>
+									</f:for>
+								</f:if>
+							</f:for>
+							<div class="form-group">
+								<label for="container-name-{element.tx_gridelements_backend_layout}">{f:translate(key: 'migrate.newcontainerid')}</label>
+								<f:form.textfield class="form-control" id="container-name-{element.tx_gridelements_backend_layout}" property="elements.{element.tx_gridelements_backend_layout}.containername"/>
+							</div>
+							<br>
+							<f:render partial="Migration/FlexFormAll" arguments="{_all}" />
+					</fieldset>
+				</f:for>
+			</div>
+		</div>
+		<br>
+		<br>
+		<f:form.submit class="btn btn-primary" value="{f:translate(key: 'migrate.submit.migrate')}" />
+	</f:form>
+</f:section>
+</html>

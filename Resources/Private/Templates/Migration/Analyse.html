@@ -1,0 +1,30 @@
+<html data-namespace-typo3-fluid="true"
+      xmlns:f="http://typo3.org/ns/TYPO3/Fluid/ViewHelpers"
+      f:schemaLocation="https://fluidtypo3.org/schemas/fluid-master.xsd">
+<f:layout name="Default" />
+
+<f:section name="content">
+	<h1><f:format.raw>{f:translate(key: 'migrate.analyse.header')}</f:format.raw></h1>
+	<h2><f:format.raw>{f:translate(key: 'migrate.analyse.grid.header')}</f:format.raw></h2>
+	<f:be.infobox title="{f:translate(key: 'migrate.analyse.container.notice.header')}" state="-1"><f:format.raw>{f:translate(key: 'migrate.analyse.container.notice.body')}</f:format.raw></f:be.infobox>
+	<f:be.infobox title="{f:translate(key: 'migrate.analyse.info.header')}" state="1"><f:format.raw>{f:translate(key: 'migrate.analyse.info.body')}</f:format.raw><f:link.typolink parameter="https://gitlab.com/bartista87/containerelementsexample" class="btn btn-link" target="_blank">{f:translate(key: 'migrate.stepone.notice.body.link.label')}</f:link.typolink></f:be.infobox>
+	<div class="typo3-TCEforms">
+		<div class="tab-content">
+			<f:for each="{gridElements}" as="element">
+						<fieldset class="form-section">
+							<strong>{f:translate(key: 'migrate.analyse.grid.label')}</strong> {element.tx_gridelements_backend_layout}<br>
+							<strong>{f:translate(key: 'migrate.analyse.grid.siteid.label')}</strong> {element.pid}<br>
+							<f:format.raw><f:translate key="migrate.analyse.grid.celements" arguments="{1: '{element.tx_gridelements_children}'}" /></f:format.raw>
+						</fieldset>
+			</f:for>
+		</div>
+	</div>
+
+	<h2>{f:translate(key: 'migrate.analyse.header2')}</h2>
+
+	<h3>{f:translate(key: 'migrate.analyse.header3')}</h3>
+	<f:format.raw>{f:translate(key: 'migrate.analyse.container.example.body')}</f:format.raw><br><br>
+	<f:format.raw>{f:translate(key: 'migrate.analyse.container.example.script')}</f:format.raw><br><br>
+	<f:be.infobox title="{f:translate(key: 'migrate.analyse.container.example.moreinformation.header')}" state="-1"><f:format.raw>{f:translate(key: 'migrate.analyse.container.example.moreinformation')}</f:format.raw></f:be.infobox>
+</f:section>
+</html>

@@ -1,0 +1,13 @@
+module.tx_gridtocontainer_tools_gridtocontainermigration {
+	persistence {
+		storagePid = {$module.tx_gridtocontainer_wispas.persistence.storagePid}
+	}
+	view {
+		templateRootPaths.0 = EXT:gridtocontainer/Resources/Private/Backend/Templates/
+		templateRootPaths.1 = {$module.tx_gridtocontainer_migration.view.templateRootPath}
+		partialRootPaths.0 = EXT:gridtocontainer/Resources/Private/Backend/Partials/
+		partialRootPaths.1 = {$module.tx_gridtocontainer_migration.view.partialRootPath}
+		layoutRootPaths.0 = EXT:gridtocontainer/Resources/Private/Backend/Layouts/
+		layoutRootPaths.1 = {$module.tx_gridtocontainer_migration.view.layoutRootPath}
+	}
+}

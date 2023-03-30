@@ -1,0 +1,65 @@
+<html data-namespace-typo3-fluid="true"
+      xmlns:f="http://typo3.org/ns/TYPO3/Fluid/ViewHelpers"
+      f:schemaLocation="https://fluidtypo3.org/schemas/fluid-master.xsd">
+
+		<h4>{f:translate(key: 'migrate.container.flexform.header')}</h4>
+		<f:be.infobox title="{f:translate(key: 'migrate.stepone.notice.header')}" state="1"><f:format.raw>{f:translate(key: 'migrate.container.flexform.info.body')}</f:format.raw></f:be.infobox>
+		<div class="panel-group" id="accordionExampleSimple">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title" id="simple-heading-panel1">
+						<a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#simple-panel1-{element.uid}" aria-expanded="false" aria-controls="simple-panel1-{element.uid}">
+							<span class="caret"></span>
+							<strong>{f:translate(key: 'migrate.container.flexform.body.header')}</strong>
+						</a>
+					</h3>
+				</div>
+				<div id="simple-panel1-{element.uid}" class="collapse" aria-labelledby="simple-heading-panel1">
+					<div class="panel-body">
+						<div>
+							<h5>{f:translate(key: 'migrate.container.flexform.old.content')}</h5>
+							<p><strong>{f:translate(key: 'migrate.container.flexform.old.content.info')}</strong></p>
+							<p>
+								<f:form.checkbox id="oldflexformvalue-{element.uid}" property="elements.{element.tx_gridelements_backend_layout}.flexFormvalue" value="1" />
+								<label for="oldflexformvalue-{element.uid}">{f:translate(key: 'migrate.container.flexform.old.label')}</label>
+								<div>
+									<span>{f:translate(key: 'migrate.container.flexform.old.example.info')}</span><br>
+									<f:format.crop maxCharacters="400" respectWordBoundaries="false">
+										<code>{element.pi_flexform}</code>
+									</f:format.crop>
+								</div>
+							</p>
+						</div>
+						<br><br>
+						<div>
+							<h5>{f:translate(key: 'migrate.container.flexform.new.header')}</h5>
+							<br>
+							<f:for each="{flexFormValues}" as="flexFormvalue" key="flexFormvalueKey">
+								<f:if condition="{flexFormvalue} == false">
+									<f:then></f:then>
+									<f:else if="{flexFormvalueKey} == fault"></f:else>
+									<f:else>
+										<p>
+											<f:form.checkbox id="{flexFormvalueKey}-{element.uid}" property="elements.{element.tx_gridelements_backend_layout}.flexFormvalue" value="{flexFormvalue}" />
+											<label for="{flexFormvalueKey}-{element.uid}">{flexFormvalueKey}</label>
+											<div>
+												<f:format.crop maxCharacters="400" respectWordBoundaries="false">
+													<code>{flexFormvalue}</code>
+												</f:format.crop>
+											</div>
+										</p>
+									</f:else>
+								</f:if>
+							</f:for>
+							<br>
+							<p>
+								<f:form.checkbox id="cleanFlexForm-{element.uid}" property="elements.{element.tx_gridelements_backend_layout}.cleanFlexForm" value="1" checked="1" />
+								<label for="cleanFlexForm-{element.uid}"><strong>{f:translate(key: 'migrate.container.flexform.clean.label')}</strong></label>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+</html>

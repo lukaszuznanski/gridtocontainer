@@ -1,0 +1,86 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+<f:layout name="Default" />
+
+<f:section name="content">
+	<f:render partial="Migration/Header" arguments="{progress:75, step:2}" />
+	<f:if condition="{gridElements}">
+		<f:be.infobox title="{f:translate(key: 'migrate.steptwo.info.header')}" state="-1"><f:format.raw>{f:translate(key: 'migrate.steptwo.info.body')}</f:format.raw></f:be.infobox>
+	</f:if>
+
+	<f:form action="migrate" name="migration" method="POST">
+		<f:if condition="{gridElements}">
+			<f:then>
+				<f:for each="{gridElements}" as="gridelement" key="grid-label" iteration="iter">
+					<div class="migration-element typo3-TCEforms">
+						<div class="tab-content">
+							<fieldset class="form-section">
+								<span class="migration-number">{iter.cycle}</span>
+								<f:for each="{gridelement}" as="element" >
+									<f:if condition="{element.header}">
+										<f:then>
+											<h3><strong>{element.header}</strong> <small>{f:translate(key: 'migrate.container.label.plain')} <strong>{element.tx_gridelements_backend_layout}</strong></small></h3><f:if condition="{element.hidden} == 1"><small>{f:translate(key: 'migrate.hidden')}</small><br></f:if>
+										</f:then>
+										<f:else>
+											<h3><strong>{f:translate(key: 'migrate.ce.notitle')}</strong> <small>{f:translate(key: 'migrate.container.label.plain')} <strong>{element.tx_gridelements_backend_layout}</strong></small></h3><f:if condition="{element.hidden} == 1"><small>{f:translate(key: 'migrate.hidden')}</small><br></f:if>
+										</f:else>
+									</f:if>
+
+									<h4>{f:translate(key: 'migrate.ce.header')}</h4>
+									<div role="tabpanel">
+										<f:for each="{contentElements}" as="contentelement" key="label" >
+											<f:if condition="{grid-label} == {label}">
+												<ul class="nav nav-tabs t3js-tabs" role="tablist" id="tabs-tab" data-store-last-tab="1">
+													<f:for each="{contentelement}" as="celement" iteration="iter">
+														<li role="presentation" class="t3js-tabmenu-item"><a href="#tab-{celement.uid}" title="" aria-controls="tab-{celement.uid}" role="tab" data-bs-toggle="tab" aria-selected="{f:if(condition: iter.isFirst, then: 'true', else:'false')}" class="{f:if(condition: iter.isFirst, then: 'active', else:'')}"><f:if condition="{celement.header}"><f:then>{celement.header}</f:then><f:else>Element without header label</f:else></f:if></a>
+														</li>
+													</f:for>
+												</ul>
+												<div class="tab-content">
+													<f:for each="{contentelement}" as="celement" iteration="iter">
+														<div role="tabpanel" class="tab-pane {f:if(condition: iter.isFirst, then: 'active', else:'')}" id="tab-{celement.uid}">
+															<div class="panel panel-tab">
+																<div class="panel-body">
+																	{f:translate(key: 'migrate.oldcolumn')} {celement.tx_gridelements_columns}<br>
+																	<div class="form-group col-md-6">
+																		<label for="columnid-{celement.uid}">{f:translate(key: 'migrate.newcolumn')} </label>
+																		<f:form.textfield class="form-control js-columnId" additionalAttributes="{data-checkbox: 'sameCid-{celement.uid}'}" id="columnid-{celement.uid}" property="contentElements.{celement.uid}.columnid" />
+																	</div>
+																	<div class="form-group col-md-6">
+																		<f:form.checkbox id="sameCid-{celement.uid}" property="contentElements.{celement.uid}.sameCid" value="{celement.tx_gridelements_columns}" checked="1" />
+																		<label for="sameCid-{celement.uid}">{f:translate(key: 'migrate.samecolumn')}</label>
+																	</div>
+																	<f:form.hidden property="contentElements.{celement.uid}.uid" value="{celement.uid}"/>
+																	<f:form.hidden property="contentElements.{celement.uid}.colpos" value="{element.colPos}"/>
+																	<f:form.hidden property="contentElements.{celement.uid}.gridUid" value="{element.uid}"/>
+																	<f:form.hidden property="contentElements.{celement.uid}.l18nParent" value="{element.l18n_parent}"/>
+																</div>
+															</div>
+														</div>
+													</f:for>
+												</div>
+											</f:if>
+										</f:for>
+									</div>
+
+									<div class="form-group">
+										<label for="container-name-{element.uid}">{f:translate(key: 'migrate.newcontainerid')}</label>
+										<f:form.textfield class="form-control" id="container-name-{element.uid}" property="elements.{element.uid}.containername"/>
+									</div>
+									<f:form.hidden property="elements.{element.uid}.uid" value="{element.uid}"/>
+
+									<f:render partial="Migration/FlexForm" arguments="{_all}" />
+								</f:for>
+							</fieldset>
+						</div>
+					</div>
+				</f:for>
+				<f:form.submit class="btn btn-primary" value="{f:translate(key: 'migrate.submit.migrate')}" />
+			</f:then>
+			<f:else>
+				<f:be.infobox title="{f:translate(key: 'migrate.steptwo.error.header')}" state="1">{f:translate(key: 'migrate.steptwo.error.body')}</f:be.infobox>
+			</f:else>
+		</f:if>
+	</f:form>
+
+</f:section>
+</html>

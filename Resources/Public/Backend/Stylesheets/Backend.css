@@ -1,0 +1,32 @@
+/***+ CSS for gridtocontainer ****/
+
+.migration-element {
+	padding: 1em;
+}
+
+.gridtocontainer .btn-primary {
+	float: right;
+}
+
+.migration-number {
+	width: 36px;
+	height: 36px;
+	padding: 8px;
+	background: #fff;
+	border: 2px solid #666;
+	color: #666;
+	text-align: center;
+}
+
+.migration-element .tab-content .form-section h4 {
+	margin-top: 1em;
+}
+
+.gridtocontainer .docheader-funcmenu select {
+	padding: 0.5em;
+}
+
+.dt-logo img {
+	width: 300px;
+	margin-left: -0.25em;
+}

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2021-06-03T20:25:50Z" product-name="gridtocontainer">
+		<header/>
+		<body>
+			<trans-unit id="migrate.stepone">
+				<source>Step 1</source>
+			</trans-unit>
+			<trans-unit id="migrate.steptwo">
+				<source>Step 2</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree">
+				<source>Step 3</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.info.header">
+				<source>Please SELECT all grid elements you want to migrate.</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.info.body">
+				<source><![CDATA[<strong>Attention:</strong> You must have registered the EXT:container elements before! And please make a <strong>backup from your database before start the migration</strong>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.container.label">
+				<source><![CDATA[<small>with gridelements-container:</small>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.ce.notitle">
+				<source>No title</source>
+			</trans-unit>
+			<trans-unit id="migrate.selectall">
+				<source>Select All</source>
+			</trans-unit>
+			<trans-unit id="migrate.submit.analyse">
+				<source>analyse content elements</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.label.plain">
+				<source>with gridelements-container:</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.header">
+				<source>Flexform configuration</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.body.header">
+				<source>Flexform content</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.old.content">
+				<source>Old flexform value from gridelement</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.old.content.info">
+				<source>If you want to continue using the old flexform content, check the box, otherwise select one of the options below</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.old.label">
+				<source>Old flexform value(s)</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.old.example.info">
+				<source>The following XML is only an example of the XML of the respective elements. Of course these can differ and are also migrated element related.</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.new.header">
+				<source>New flexform value to be inserted</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.clean.label">
+				<source>Clean flexform field</source>
+			</trans-unit>
+			<trans-unit id="migrate.container.flexform.info.body">
+				<source><![CDATA[<strong>Important:</strong> Please check if your grid element had a flexform configuration and if you want to replace it. By default, <strong>the pi_flexform field is cleared during migration!</strong> This could lead to errors in the frontend if a flexform configuration is expected.]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.ce.header">
+				<source>Content elements from this gridelement</source>
+			</trans-unit>
+			<trans-unit id="migrate.oldcolumn">
+				<source>Old column-ID:</source>
+			</trans-unit>
+			<trans-unit id="migrate.newcolumn">
+				<source>New column-ID:</source>
+			</trans-unit>
+			<trans-unit id="migrate.samecolumn">
+				<source>Same column-ID</source>
+			</trans-unit>
+			<trans-unit id="migrate.newcontainerid">
+				<source>New EXT:container element-identifier e.g. ce_columns2</source>
+			</trans-unit>
+			<trans-unit id="migrate.submit.migrate">
+				<source>migrate now</source>
+			</trans-unit>
+			<trans-unit id="migrate.steptwo.error.header">
+				<source>No elements selected</source>
+			</trans-unit>
+			<trans-unit id="migrate.steptwo.error.body">
+				<source>Sorry! You have not selected an element to migrate. Please start from the first step!</source>
+			</trans-unit>
+			<trans-unit id="migrate.steptwo.info.header">
+				<source>Please CHECK the data</source>
+			</trans-unit>
+			<trans-unit id="migrate.steptwo.info.body">
+				<source><![CDATA[Please check the data on this page and note the content elements and column ids.<br><strong>Attention: </strong>If you <strong>don't want</strong> the same column ids like gridelements, <strong>uncheck</strong> the option "Same column-ID" for each content element]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree.success.header">
+				<source>Congratulations</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree.error.header">
+				<source>Error</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree.success.grid.body">
+				<source>Your gridelement-container migration was successful</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree.error.grid.body">
+				<source>Sorry! The gridelement-container migration step was unfortunately not successful, please check your settings.</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree.success.ce.body">
+				<source>Your contentElement migration was successful</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepthree.error.ce.body">
+				<source>Sorry! The contentElement migration step was unfortunately not successful, please check your settings.</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.notice.header">
+				<source>Important notice</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.notice.body">
+				<source><![CDATA[If you do not know which grid elements are on your page]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.notice.body.link.label">
+				<source>click here</source>
+			</trans-unit>
+			<trans-unit id="migrate.header">
+				<source><![CDATA[Migrate gridelements to container <small>migrate all elements you want!</small>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.header">
+				<source><![CDATA[Analyse <small>the grid elements</small>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.grid.header">
+				<source>Grid elements in this website (EXT:gridelements)</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.grid.label">
+				<source>Gridelement-Layout element:</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.grid.siteid.label">
+				<source>For example on site with id:</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.grid.celements">
+				<source><![CDATA[<strong>Grid element with:</strong> %1$s element/s]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.header2">
+				<source>Migrate to EXT:container</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.header3">
+				<source>Registration of Container Elements</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.container.example.body">
+				<source><![CDATA[This is an example to create a 2 column container. The code snippet goes into a file in your sitepackage or theme extension in the folder <code>Configuration/TCA/Overrides/</code>. The file can have any name but it is good practice to name it according to the database table it relates to. In this case this would be <code>tt_content.php</code>.]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.container.example.script">
+				<source><![CDATA[<code>\TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\B13\Container\Tca\Registry::class)->configureContainer(<br>
+						(<br>
+							new \B13\Container\Tca\ContainerConfiguration(<br>
+								'b13-2cols-with-header-container', // CType<br>
+								'2 Column Container With Header', // label<br>
+								'Some Description of the Container', // description<br>
+								[<br>
+									[<br>
+										['name' => 'header', 'colPos' => 200, 'colspan' => 2, 'allowed' => ['CType' => 'header, textmedia']]<br>
+									],<br>
+									[<br>
+										['name' => 'left side', 'colPos' => 201],<br>
+										['name' => 'right side', 'colPos' => 202]<br>
+									]<br>
+								] // grid configuration<br>
+							)<br>
+						)<br>
+						// set an optional icon configuration<br>
+						->setIcon('EXT:container_example/Resources/Public/Icons/b13-2cols-with-header-container.svg')<br>
+					);</code>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.container.example.moreinformation.header">
+				<source>Information</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.container.example.moreinformation">
+				<source><![CDATA[For more information go to the official documentation from EXT:container. <a class="btn btn-default" href="https://github.com/b13/container/blob/master/README.md" target="_blank">Go to the documentation</a>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.container.notice.header">
+				<source>Notice</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.container.notice.body">
+				<source><![CDATA[<strong>All information on this site does not claim to be complete or correct.</strong> This information is intended only as a guide for developers.]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.actionMenu.1">
+				<source>Migration per element</source>
+			</trans-unit>
+			<trans-unit id="migrate.actionMenu.2">
+				<source>Support &amp; Sponsors</source>
+			</trans-unit>
+			<trans-unit id="migrate.actionMenu.3">
+				<source>Migration from gridelements layout key</source>
+			</trans-unit>
+			<trans-unit id="migrate.actionMenu.4">
+				<source>Analyze website</source>
+			</trans-unit>
+			<trans-unit id="migrate.support.lead">
+				<source>Great that you are using this extension!</source>
+			</trans-unit>
+			<trans-unit id="migrate.sponsor.head">
+				<source>Current sponsors</source>
+			</trans-unit>
+			<trans-unit id="migrate.sponsor.lead">
+				<source>The following companies have already supported this extension.</source>
+			</trans-unit>
+			<trans-unit id="migrate.sponsor.1">
+				<source>D&amp;T Internet GmbH</source>
+			</trans-unit>
+			<trans-unit id="migrate.hidden">
+				<source>(hidden element)</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.h2">
+				<source>Migrate all elements individually</source>
+			</trans-unit>
+			<trans-unit id="migrate.stepone.all">
+				<source>If you don't want to migrate the grid elements individually, but by grid-layout in general,</source>
+			</trans-unit>
+			<trans-unit id="migrate.all.columns">
+				<source>Column id/s</source>
+			</trans-unit>
+			<trans-unit id="migrate.migrategeneral.info.header">
+				<source>Information about this function</source>
+			</trans-unit>
+			<trans-unit id="migrate.migrategeneral.info.body">
+				<source><![CDATA[This function migrates all gridelements and content elements with the selected gridelements-layout keys. <strong>Not tested is a migration of nested grid elements</strong>]]></source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.info.header">
+				<source>Example Extension</source>
+			</trans-unit>
+			<trans-unit id="migrate.analyse.info.body">
+				<source><![CDATA[An example extension can be found here:]]></source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
