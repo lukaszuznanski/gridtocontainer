@@ -1,4 +1,5 @@
 <?php
+
 namespace SBublies\Gridtocontainer\Command;
 
 /***
@@ -12,6 +13,7 @@ namespace SBublies\Gridtocontainer\Command;
  *
  ***/
 
+use Doctrine\DBAL\DBALException;
 use SBublies\Gridtocontainer\Domain\Repository\MigrationRepository;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -19,6 +21,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class MigrateAllCommand extends Command
@@ -39,15 +42,17 @@ class MigrateAllCommand extends Command
 
 	}
 
-	/**
-	 * Executes the command to migrate the elements
-	 *
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int error code
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
+    /**
+     * Executes the command to migrate the elements
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int error code
+     * @throws DBALException
+     * @throws Exception
+     */
+	protected function execute(InputInterface $input, OutputInterface $output): int
+    {
 		$io = new SymfonyStyle($input, $output);
 
 		$grididentifier = $input->getArgument('grididentifier');
@@ -67,16 +72,16 @@ class MigrateAllCommand extends Command
         }
 
         $elementInfos[$grididentifier]['containername'] = $containeridentifier;
-        if ($flexformoption == 'clean') {
+        if ($flexformoption === 'clean') {
             $elementInfos[$grididentifier]['flexFormvalue'] = '';
             $elementInfos[$grididentifier]['cleanFlexForm'] = 1;
-        } elseif ($flexformoption == 'old') {
+        } elseif ($flexformoption === 'old') {
             $elementInfos[$grididentifier]['flexFormvalue'] = 1;
             $elementInfos[$grididentifier]['cleanFlexForm'] = '';
         } else {
             $flexFormValue = $GLOBALS['TCA']['tt_content']['columns']['pi_flexform']['config']['ds']['*,'.$flexformoption];
             $flexFormInfos = '';
-            if (substr_compare('FILE:',$flexFormValue,0,5) OR $flexFormValue == '') {
+            if (substr_compare('FILE:',$flexFormValue,0,5) || $flexFormValue == '') {
                 $flexFormInfos .= $flexFormValue;
             } else {
                 $flexFormInfos .= file_get_contents(\TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName(substr($flexFormValue,5)));
@@ -90,12 +95,12 @@ class MigrateAllCommand extends Command
 
         $migrateAll = $migrationRepository->updateAllElements($elementInfos);
 
-        if ($migrateAll == true){
+        if ($migrateAll){
             $io->writeln('The migration is completed');
             return Command::SUCCESS;
-        } else {
-            $io->writeln('The migration is failed');
-            return Command::FAILURE;
         }
-	}
+
+        $io->writeln('The migration is failed');
+        return Command::FAILURE;
+    }
 }
