@@ -26,20 +26,17 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class MigrateAllCommand extends Command
 {
-
 	/**
 	 * Configure the command by defining the name, options and arguments
 	 */
 	protected function configure(): void
 	{
-
 		$this->addArgument('grididentifier',InputArgument::REQUIRED,'Gridelements identifier to migrate all the elements from this type')
 			->addArgument('containeridentifier', InputArgument::REQUIRED, 'The new EXT:container element-identifier e.g. ce_columns2')
 			->addArgument('flexformidentifier', InputArgument::REQUIRED, 'If you want a clean flexform field, write "clean". If you want a flexform value from the TCA than write the identifier or if you want the old flexform value than write "old".')
             ->addArgument('oldcolumids', InputArgument::REQUIRED, 'The old Column-ID/s, separated with a commar without space')
 			->addArgument('columnids',InputArgument::REQUIRED, 'New Column-ID/s, separated with a commar without space. It must be used at the end of the argument list and it must have the same order as the old columids')
 			->setHelp('Migrate gridelements to container.' . LF . 'You must have registered the EXT:container elements before! And please make a backup from your database before start the migration'.LF.'This function migrates all gridelements and content elements with the selected gridelements-layout keys. Not tested is a migration of nested grid elements');
-
 	}
 
     /**
