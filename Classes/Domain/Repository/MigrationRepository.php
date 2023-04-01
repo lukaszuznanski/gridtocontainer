@@ -142,7 +142,7 @@ class MigrationRepository extends Repository
             } else {
                 $colPos = $result['sameCid'];
             }
-            if ((int)$result['l18nParent'] > 0) {
+            if (isset($result['l18nParent']) && (int)$result['l18nParent'] > 0) {
                 $txContainerParent = $result['l18nParent'];
             } else {
                 $txContainerParent = $result['gridUid'];
@@ -290,7 +290,7 @@ class MigrationRepository extends Repository
                                     } else {
                                         $colPos = $column['sameCid'];
                                     }
-                                    if ((int)$element['l18nParent'] > 0) {
+                                    if (isset($element['l18nParent']) && (int)$element['l18nParent'] > 0) {
                                         $txContainerParent = $contentElementResults['parents'][$element['l18n_parent']];
                                     } else {
                                         $txContainerParent = $key3;
