@@ -21,11 +21,12 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
+use TYPO3\CMS\Extbase\Persistence\Repository;
 
 /**
  * The repository for Migration
  */
-class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
+class MigrationRepository extends Repository
 {
     protected string $table = 'tt_content';
 
@@ -123,9 +124,9 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
     /**
      * @param $data
-     * @return void
+     * @return bool
      */
-    public function updateContentElements($data): void
+    public function updateContentElements($data): bool
     {
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
@@ -159,14 +160,15 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                 ]
             );
         }
+        return true;
     }
 
     /**
      *
-     * @return QueryResultInterface|array
+     * @return array
      * @throws DBALException
      */
-    public function findGridelementsCustom(): QueryResultInterface|array
+    public function findGridelementsCustom(): array
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
@@ -214,9 +216,10 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
     /**
      * @param $elementsArray
+     * @return bool
      * @throws DBALException
      */
-    public function updateAllElements($elementsArray)
+    public function updateAllElements($elementsArray): bool
     {
 
         /** @var ConnectionPool $connectionPool */
@@ -277,13 +280,28 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                         foreach ($grids['elements'] as $key3 => $elements) {
                             foreach ($elements as $element) {
                                 if ($element['tx_gridelements_columns'] == $key2) {
+
+                                    if (empty($column['sameCid'])) {
+                                        if (empty($column['columnid'])) {
+                                            $colPos = 0;
+                                        } else {
+                                            $colPos = $column['columnid'];
+                                        }
+                                    } else {
+                                        $colPos = $column['sameCid'];
+                                    }
+                                    if ((int)$element['l18nParent'] > 0) {
+                                        $txContainerParent = $contentElementResults['parents'][$element['l18n_parent']];
+                                    } else {
+                                        $txContainerParent = $key3;
+                                    }
                                     /** @var Connection $connection */
                                     $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
                                     $connection->update(
                                         $this->table,
                                         [
-                                            'colPos' => empty($column['sameCid']) ? ($column['columnid'] ?: 0) : $column['sameCid'],
-                                            'tx_container_parent' => ((int)$element['l18n_parent'] > 0 ? $contentElementResults['parents'][$element['l18n_parent']] : $key3),
+                                            'colPos' => $colPos,
+                                            'tx_container_parent' => $txContainerParent,
                                             'tx_gridelements_container' => 0,
                                             'tx_gridelements_columns' => 0
                                         ],
@@ -306,7 +324,7 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                 if ($key === 'contentelements') {
                     foreach ($results[$key] as $element) {
                         if (empty($results['cleanFlexForm'])) {
-                            if ($results['flexFormvalue'] == 1) {
+                            if ($results['flexFormvalue'] === 1) {
                                 $flexformValue = $element['pi_flexform'];
                             } else {
                                 $flexformValue = $results['flexFormvalue'];
@@ -329,5 +347,6 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                 }
             }
         }
+        return true;
     }
 }

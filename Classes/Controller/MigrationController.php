@@ -2,10 +2,12 @@
 
 namespace SBublies\Gridtocontainer\Controller;
 
+use Doctrine\DBAL\DBALException;
 use SBublies\Gridtocontainer\Domain\Repository\MigrationRepository;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 /***
  * This file is part of the "Gridtocontainer" Extension for TYPO3 CMS.
@@ -19,7 +21,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * MigrationController
  */
-class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
+class MigrationController extends ActionController
 {
     /**
      * migrationRepository
@@ -118,6 +120,7 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      * action migrateprocess
      *
      * @return void
+     * @throws DBALException
      */
     public function migrateprocessAction(): void
     {
@@ -162,8 +165,9 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      * action analyse
      *
      * @return void
+     * @throws DBALException
      */
-    public function analyseAction()
+    public function analyseAction(): void
     {
         $gridelementsElements = $this->migrationRepository->findGridelementsCustom();
         $gridElementsArray = [];
