@@ -1,6 +1,6 @@
 <?php
-namespace SBublies\Gridtocontainer\Domain\Repository;
 
+namespace SBublies\Gridtocontainer\Domain\Repository;
 
 /***
  *

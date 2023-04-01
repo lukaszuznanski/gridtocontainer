@@ -1,6 +1,6 @@
 <?php
-namespace SBublies\Gridtocontainer\Controller;
 
+namespace SBublies\Gridtocontainer\Controller;
 
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Utility\DebugUtility;
