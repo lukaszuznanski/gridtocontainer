@@ -13,58 +13,57 @@ namespace SBublies\Gridtocontainer\Domain\Repository;
  *
  ***/
 
+use Doctrine\DBAL\DBALException;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 
 /**
  * The repository for Migration
  */
 class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 {
-
-    protected $table = 'tt_content';
+    protected string $table = 'tt_content';
 
     /**
      *
-     * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
+     * @return array|QueryResultInterface
+     * @throws DBALException
      */
-    public function findGridelements()
+    public function findGridelements(): QueryResultInterface|array
     {
-            /** @var Connection $connection */
-            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-            /** @var QueryBuilder $queryBuilder */
-            $queryBuilder = $connection->createQueryBuilder();
-            $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+        $queryBuilder = $connection->createQueryBuilder();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-            $results = $queryBuilder
-                ->select('*')
-                ->from($this->table)
-                ->where(
-                    $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
-                )
-                ->execute()
-                ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-
-            return $results;
+        return $queryBuilder
+            ->select('*')
+            ->from($this->table)
+            ->where(
+                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+            )
+            ->execute()
+            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
     }
 
     /**
      * @param $id
-     * @return mixed[]
+     * @return array
+     * @throws DBALException
      */
-    public function findContentfromGridElements($id)
+    public function findContentfromGridElements($id): array
     {
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        /** @var QueryBuilder $queryBuilder */
         $queryBuilder = $connection->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        $results = $queryBuilder
+        return $queryBuilder
             ->select('*')
             ->from($this->table)
             ->where(
@@ -72,23 +71,21 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
             )
             ->execute()
             ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-
-        return $results;
     }
 
     /**
      * @param $id
-     * @return mixed[]
+     * @return array
+     * @throws DBALException
      */
-    public function findById($id)
+    public function findById($id): array
     {
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        /** @var QueryBuilder $queryBuilder */
         $queryBuilder = $connection->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        $results = $queryBuilder
+        return $queryBuilder
             ->select('*')
             ->from($this->table)
             ->where(
@@ -96,19 +93,16 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
             )
             ->execute(true)
             ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-
-        return $results;
     }
 
     /**
      * @param $data
-     *
+     * @return bool
      */
-    public function updateGridElements($data)
+    public function updateGridElements($data): bool
     {
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        /** @var QueryBuilder $queryBuilder */
         $queryBuilder = $connection->createQueryBuilder();
 
         foreach ($data as $result) {
@@ -129,21 +123,34 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
     /**
      * @param $data
-     *
+     * @return void
      */
-    public function updateContentElements($data)
+    public function updateContentElements($data): void
     {
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        /** @var QueryBuilder $queryBuilder */
         $queryBuilder = $connection->createQueryBuilder();
 
         foreach ($data as $result) {
+            if (empty($result['sameCid'])) {
+                if (empty($result['columnid'])) {
+                    $colPos = 0;
+                } else {
+                    $colPos = $result['columnid'];
+                }
+            } else {
+                $colPos = $result['sameCid'];
+            }
+            if ((int)$result['l18nParent'] > 0) {
+                $txContainerParent = $result['l18nParent'];
+            } else {
+                $txContainerParent = $result['gridUid'];
+            }
             $connection->update(
                 $this->table,
                 [
-                    'colPos' => empty($result['sameCid']) ? ($result['columnid'] ?: 0): $result['sameCid'],
-                    'tx_container_parent' => ((int)$result['l18nParent'] > 0 ? $result['l18nParent'] : $result['gridUid']),
+                    'colPos' => $colPos,
+                    'tx_container_parent' => $txContainerParent,
                     'tx_gridelements_container' => 0,
                     'tx_gridelements_columns' => 0
                 ],
@@ -152,22 +159,21 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                 ]
             );
         }
-        return true;
     }
 
     /**
      *
-     * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
+     * @return QueryResultInterface|array
+     * @throws DBALException
      */
-    public function findGridelementsCustom()
+    public function findGridelementsCustom(): QueryResultInterface|array
     {
-        /** @var \TYPO3\CMS\Core\Database\ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance( "TYPO3\\CMS\\Core\\Database\\ConnectionPool");
-        /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        $results = $queryBuilder
+        return $queryBuilder
             ->select('*')
             ->from($this->table)
             ->where(
@@ -175,31 +181,31 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
             )
             ->execute()
             ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-        return $results;
     }
 
     /**
      * @param $gridElementsArray
      * @return array
+     * @throws DBALException
      */
-    public function findContent($gridElementsArray)
+    public function findContent($gridElementsArray): array
     {
         $contentElements = [];
-        foreach($gridElementsArray as $id){
-            if(empty($id)){
+        foreach ($gridElementsArray as $id) {
+            if (empty($id)) {
                 continue;
-            } else {
-                $contentElements[$id['uid']] = $this->findContentfromGridElements($id['uid']);
             }
+
+            $contentElements[$id['uid']] = $this->findContentfromGridElements($id['uid']);
         }
         $contentElementsArray = [];
-        foreach($contentElements as $key => $contentElement){
-            if(empty($contentElement)){
+        foreach ($contentElements as $key => $contentElement) {
+            if (empty($contentElement)) {
                 continue;
-            } else {
-                foreach ($contentElement as $cElement) {
-                    $contentElementsArray[$key][$cElement['tx_gridelements_columns']] = $contentElement;
-                }
+            }
+
+            foreach ($contentElement as $cElement) {
+                $contentElementsArray[$key][$cElement['tx_gridelements_columns']] = $contentElement;
             }
         }
 
@@ -208,25 +214,27 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
     /**
      * @param $elementsArray
-     * @return bool
+     * @throws DBALException
      */
     public function updateAllElements($elementsArray)
     {
 
-        /** @var \TYPO3\CMS\Core\Database\ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance( "TYPO3\\CMS\\Core\\Database\\ConnectionPool");
-        /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         foreach ($elementsArray as $key => $element) {
-            if ($elementsArray[$key]['active'] == 1) {
+            if ($element['active'] === 1) {
                 $elementsArray[$key]['contentelements'] = $queryBuilder
                     ->select('*')
                     ->from($this->table)
                     ->where(
                         $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'),
-                        $queryBuilder->expr()->eq('tx_gridelements_backend_layout', $queryBuilder->createNamedParameter($key))
+                        $queryBuilder->expr()->eq(
+                            'tx_gridelements_backend_layout',
+                            $queryBuilder->createNamedParameter($key)
+                        )
                     )
                     ->execute()
                     ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
@@ -238,11 +246,10 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
         $contentElementResults = [];
         foreach ($elementsArray as $key => $results) {
             foreach ($results as $key2 => $elements) {
-                if ($key2 == 'contentelements') {
+                if ($key2 === 'contentelements') {
                     foreach ($results[$key2] as $element) {
                         /** @var Connection $connection */
                         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-                        /** @var QueryBuilder $queryBuilder */
                         $queryBuilder = $connection->createQueryBuilder();
                         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
                         $contentElements = $queryBuilder
@@ -253,7 +260,7 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                             )
                             ->execute()
                             ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-                        foreach($contentElements as $contentElement) {
+                        foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
                         }
                         $contentElementResults[$key]['elements'][$element['uid']] = $contentElements;
@@ -265,7 +272,7 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
         foreach ($contentElementResults as $grids) {
             foreach ($grids as $key => $contents) {
-                if ($key == 'columns') {
+                if ($key === 'columns') {
                     foreach ($grids[$key] as $key2 => $column) {
                         foreach ($grids['elements'] as $key3 => $elements) {
                             foreach ($elements as $element) {
@@ -276,7 +283,7 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                                         $this->table,
                                         [
                                             'colPos' => empty($column['sameCid']) ? ($column['columnid'] ?: 0) : $column['sameCid'],
-                                            'tx_container_parent' => ((int)$element['l18n_parent'] > 0 ?  $contentElementResults['parents'][$element['l18n_parent']] : $key3),
+                                            'tx_container_parent' => ((int)$element['l18n_parent'] > 0 ? $contentElementResults['parents'][$element['l18n_parent']] : $key3),
                                             'tx_gridelements_container' => 0,
                                             'tx_gridelements_columns' => 0
                                         ],
@@ -296,7 +303,7 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
         foreach ($elementsArray as $results) {
             foreach ($results as $key => $elements) {
-                if ($key == 'contentelements') {
+                if ($key === 'contentelements') {
                     foreach ($results[$key] as $element) {
                         if (empty($results['cleanFlexForm'])) {
                             if ($results['flexFormvalue'] == 1) {
@@ -322,8 +329,5 @@ class MigrationRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                 }
             }
         }
-
-        return true;
-
     }
 }

@@ -2,6 +2,7 @@
 
 namespace SBublies\Gridtocontainer\Controller;
 
+use SBublies\Gridtocontainer\Domain\Repository\MigrationRepository;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -20,19 +21,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
 {
-
     /**
      * migrationRepository
      *
-     * @var \SBublies\Gridtocontainer\Domain\Repository\MigrationRepository
+     * @var MigrationRepository|null
      *
      */
-    protected $migrationRepository = null;
+    protected ?MigrationRepository $migrationRepository = null;
 
     /**
-     * @param \SBublies\Gridtocontainer\Domain\Repository\MigrationRepository|null $migrationRepository
+     * @param MigrationRepository|null $migrationRepository
      */
-    public function __construct(?\SBublies\Gridtocontainer\Domain\Repository\MigrationRepository $migrationRepository)
+    public function __construct(?MigrationRepository $migrationRepository)
     {
         $this->migrationRepository = $migrationRepository;
     }
@@ -42,10 +42,10 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      *
      * @return void
      */
-    public function listAction()
+    public function listAction(): void
     {
-            $gridelementsElements = $this->migrationRepository->findGridelements();
-            $this->view->assign('gridelementsElements', $gridelementsElements);
+        $gridelementsElements = $this->migrationRepository->findGridelements();
+        $this->view->assign('gridelementsElements', $gridelementsElements);
     }
 
     /**
@@ -53,38 +53,30 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      *
      * @return void
      */
-    public function processAction()
+    public function processAction(): void
     {
         // Form Data
         $arguments = $this->request->getArguments();
         $elementIds = $arguments['migration']['elements'];
         $contentElements = [];
         $gridelementsElements = [];
-        foreach($elementIds as $id){
-            if(empty($id)){
+        foreach ($elementIds as $id) {
+            if (empty($id)) {
                 continue;
-            } else {
-                $contentElements[$id] = $this->migrationRepository->findContentfromGridElements($id);
-                $gridelementsElements[$id] = $this->migrationRepository->findById($id);
             }
+
+            $contentElements[$id] = $this->migrationRepository->findContentfromGridElements($id);
+            $gridelementsElements[$id] = $this->migrationRepository->findById($id);
         }
         // Flexform value from database or tca definition
-        $flexFormValuePathsFromTca = $GLOBALS['TCA']['tt_content']['columns']['pi_flexform']['config']['ds'];
-        $flexFormValuesArray = [];
-        foreach ($flexFormValuePathsFromTca as $key => $flexFormValue) {
-            if (substr_compare('FILE:',$flexFormValue,0,5) OR $flexFormValue == '') {
-                $flexFormValuesArray[substr($key,2)] = $flexFormValue;
-            } else {
-                $flexFormValuesArray[substr($key,2)] = file_get_contents(\TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName(substr($flexFormValue,5)));
-            }
-        }
+        $flexFormValuesArray = $this->getFlexFormValuesArray();
         $this->view->assignMultiple(
-            array(
-                "gridElements" => $gridelementsElements,
-                "contentElements" => $contentElements,
-                "flexFormValues" => $flexFormValuesArray,
-                "arguments" => $arguments
-            )
+            [
+                'gridElements' => $gridelementsElements,
+                'contentElements' => $contentElements,
+                'flexFormValues' => $flexFormValuesArray,
+                'arguments' => $arguments
+            ]
         );
     }
 
@@ -93,38 +85,32 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      *
      * @return void
      */
-    public function migrategeneralAction()
+    public function migrategeneralAction(): void
     {
         $gridelementsElements = $this->migrationRepository->findGridelementsCustom();
-        $gridElementsArray=[];
+        $gridElementsArray = [];
         $layoutColumns = [];
         foreach ($gridelementsElements as $gridElement) {
             $columnElement = $this->migrationRepository->findContentfromGridElements($gridElement['uid']);
-            if($columnElement) {
+            if ($columnElement) {
                 $columnElementFlip = array_fill_keys(array_column($columnElement, 'tx_gridelements_columns'), '1');
-                if(!isset($layoutColumns[$gridElement['tx_gridelements_backend_layout']])) $layoutColumns[$gridElement['tx_gridelements_backend_layout']] = [];
-                if(array_diff_assoc($columnElementFlip, $layoutColumns[$gridElement['tx_gridelements_backend_layout']])) {
+                if (!isset($layoutColumns[$gridElement['tx_gridelements_backend_layout']])) {
+                    $layoutColumns[$gridElement['tx_gridelements_backend_layout']] = [];
+                }
+                if (array_diff_assoc($columnElementFlip, $layoutColumns[$gridElement['tx_gridelements_backend_layout']])) {
                     $gridElementsArray[$gridElement['tx_gridelements_backend_layout']] = $gridElement;
                     $layoutColumns[$gridElement['tx_gridelements_backend_layout']] += $columnElementFlip;
                 }
             }
         }
         // Flexform value from database or tca definition
-        $flexFormValuePathsFromTca = $GLOBALS['TCA']['tt_content']['columns']['pi_flexform']['config']['ds'];
-        $flexFormValuesArray = [];
-        foreach ($flexFormValuePathsFromTca as $key => $flexFormValue) {
-            if (substr_compare('FILE:',$flexFormValue,0,5) OR $flexFormValue == '') {
-                $flexFormValuesArray[substr($key,2)] = $flexFormValue;
-            } else {
-                $flexFormValuesArray[substr($key,2)] = file_get_contents(\TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName(substr($flexFormValue,5)));
-            }
-        }
+        $flexFormValuesArray = $this->getFlexFormValuesArray();
         $this->view->assignMultiple(
-            array(
-                "gridelementsElements" => $gridElementsArray,
-                "flexFormValues" => $flexFormValuesArray,
-                "layoutColumns" => $layoutColumns,
-            )
+            [
+                'gridelementsElements' => $gridElementsArray,
+                'flexFormValues' => $flexFormValuesArray,
+                'layoutColumns' => $layoutColumns,
+            ]
         );
     }
 
@@ -133,18 +119,17 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      *
      * @return void
      */
-    public function migrateprocessAction()
+    public function migrateprocessAction(): void
     {
         // Form Data
         $arguments = $this->request->getArguments();
         $migrateAllElements = $this->migrationRepository->updateAllElements($arguments['migrategeneral']['elements']);
         $this->view->assignMultiple(
-            array(
-                "arguments" => $arguments,
-                "migrateAllElements" => $migrateAllElements
-            )
+            [
+                'arguments' => $arguments,
+                'migrateAllElements' => $migrateAllElements
+            ]
         );
-
     }
 
     /**
@@ -152,20 +137,24 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      *
      * @return void
      */
-    public function migrateAction()
+    public function migrateAction(): void
     {
         // Form Data
         $arguments = $this->request->getArguments();
 
-        $migrateContainerElements = $this->migrationRepository->updateGridElements($arguments['migration']['elements']);
-        $migrateContentElements = $this->migrationRepository->updateContentElements($arguments['migration']['contentElements']);
+        $migrateContainerElements = $this->migrationRepository->updateGridElements(
+            $arguments['migration']['elements']
+        );
+        $migrateContentElements = $this->migrationRepository->updateContentElements(
+            $arguments['migration']['contentElements']
+        );
 
         $this->view->assignMultiple(
-            array(
-                "arguments" => $arguments,
-                "ContainerElementResult" => $migrateContainerElements,
-                "ContentElementResult" => $migrateContentElements
-            )
+            [
+                'arguments' => $arguments,
+                'ContainerElementResult' => $migrateContainerElements,
+                'ContentElementResult' => $migrateContentElements
+            ]
         );
     }
 
@@ -177,14 +166,14 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
     public function analyseAction()
     {
         $gridelementsElements = $this->migrationRepository->findGridelementsCustom();
-        $gridElementsArray=[];
+        $gridElementsArray = [];
         foreach ($gridelementsElements as $element) {
             $gridElementsArray[$element['tx_gridelements_backend_layout']] = $element;
         }
         $this->view->assignMultiple(
-            array(
-                "gridElements" => $gridElementsArray
-            )
+            [
+                'gridElements' => $gridElementsArray
+            ]
         );
     }
 
@@ -193,8 +182,27 @@ class MigrationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionContro
      *
      * @return void
      */
-    public function overviewAction()
+    public function overviewAction(): void
     {
         //Overview
+    }
+
+    /**
+     * @return array
+     */
+    public function getFlexFormValuesArray(): array
+    {
+        $flexFormValuePathsFromTca = $GLOBALS['TCA']['tt_content']['columns']['pi_flexform']['config']['ds'];
+        $flexFormValuesArray = [];
+        foreach ($flexFormValuePathsFromTca as $key => $flexFormValue) {
+            if (substr_compare('FILE:', $flexFormValue, 0, 5) || $flexFormValue == '') {
+                $flexFormValuesArray[substr($key, 2)] = $flexFormValue;
+            } else {
+                $flexFormValuesArray[substr($key, 2)] = file_get_contents(
+                    \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName(substr($flexFormValue, 5))
+                );
+            }
+        }
+        return $flexFormValuesArray;
     }
 }
