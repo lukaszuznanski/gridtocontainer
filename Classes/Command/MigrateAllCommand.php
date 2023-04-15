@@ -94,10 +94,10 @@ class MigrateAllCommand extends Command
 
         if ($migrateAll) {
             $io->writeln('The migration is completed');
-            return Command::SUCCESS;
+            return 0;
         }
 
         $io->writeln('The migration is failed');
-        return Command::FAILURE;
+        return 1;
     }
 }
