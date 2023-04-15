@@ -23,6 +23,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
+use Psr\Log\LoggerInterface;
 
 /**
  * The repository for Migration
@@ -30,6 +31,7 @@ use TYPO3\CMS\Extbase\Persistence\Repository;
 class MigrationRepository extends Repository
 {
     protected string $table = 'tt_content';
+    protected LoggerInterface $logger;
 
     /**
      *
@@ -223,6 +225,7 @@ class MigrationRepository extends Repository
      */
     public function updateAllElements($elementsArray): bool
     {
+        $this->logger->info('Start updateAllElements');
 
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
@@ -242,6 +245,7 @@ class MigrationRepository extends Repository
                     )
                     ->execute()
                     ->fetchAllAssociative();
+                $this->logger->info('Select gridelements_pi: add select: \n' . print_r($elementsArray[$grididentifier]['contentelements'], true));
             } else {
                 unset($elementsArray[$grididentifier]);
             }
@@ -264,6 +268,9 @@ class MigrationRepository extends Repository
                             )
                             ->execute()
                             ->fetchAllAssociative();
+
+                        $this->logger->info('Select tx_gridelements_container: add select: \n' . print_r($contentElements, true));
+
                         foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
                         }
@@ -299,14 +306,19 @@ class MigrationRepository extends Repository
                                     }
                                     /** @var Connection $connection */
                                     $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+                                    $updateCols = [
+                                        'colPos' => $colPos,
+                                        'tx_container_parent' => $txContainerParent,
+                                        'tx_gridelements_container' => 0,
+                                        'tx_gridelements_columns' => 0
+                                    ];
+
+                                    $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'].' Update content: \n' . print_r($updateCols, true));
+
                                     $connection->update(
                                         $this->table,
-                                        [
-                                            'colPos' => $colPos,
-                                            'tx_container_parent' => $txContainerParent,
-                                            'tx_gridelements_container' => 0,
-                                            'tx_gridelements_columns' => 0
-                                        ],
+                                        $updateCols,
                                         [
                                             'uid' => $element['uid']
                                         ]
