@@ -63,9 +63,9 @@ class MigrateAllCommand extends Command
         $elementInfos = [];
         $elementInfos[$grididentifier]['active'] = 1;
         $columIds = array_combine(explode(',', $oldcolumids), explode(',', $columnids));
-        foreach ($columIds as $key => $columnId) {
-            $elementInfos[$grididentifier]['columns'][$key]['columnid'] = $columnId;
-            $elementInfos[$grididentifier]['columns'][$key]['sameCid'] = '';
+        foreach ($columIds as $oldColumnId => $newColumnId) {
+            $elementInfos[$grididentifier]['columns'][$oldColumnId]['columnid'] = $newColumnId;
+            $elementInfos[$grididentifier]['columns'][$oldColumnId]['sameCid'] = null;
         }
 
         $elementInfos[$grididentifier]['containername'] = $containeridentifier;

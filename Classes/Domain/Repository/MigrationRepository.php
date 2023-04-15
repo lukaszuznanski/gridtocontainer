@@ -14,6 +14,7 @@ namespace SBublies\Gridtocontainer\Domain\Repository;
  ***/
 
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Exception;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\DebugUtility;
@@ -218,6 +219,7 @@ class MigrationRepository extends Repository
      * @param $elementsArray
      * @return bool
      * @throws DBALException
+     * @throws Exception
      */
     public function updateAllElements($elementsArray): bool
     {
@@ -227,27 +229,26 @@ class MigrationRepository extends Repository
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        foreach ($elementsArray as $key => $element) {
-            if ($element['active'] === 1) {
-                $elementsArray[$key]['contentelements'] = $queryBuilder
+        foreach ($elementsArray as $grididentifier => $elements) {
+            if ($elementsArray[$grididentifier]['active'] === 1) {
+                $elementsArray[$grididentifier]['contentelements'] = $queryBuilder
                     ->select('*')
                     ->from($this->table)
                     ->where(
                         $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'),
-                        $queryBuilder->expr()->eq(
-                            'tx_gridelements_backend_layout',
-                            $queryBuilder->createNamedParameter($key)
+                        $queryBuilder->expr()->eq('tx_gridelements_backend_layout',
+                            $queryBuilder->createNamedParameter($grididentifier)
                         )
                     )
                     ->execute()
-                    ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
+                    ->fetchAllAssociative();
             } else {
-                unset($elementsArray[$key]);
+                unset($elementsArray[$grididentifier]);
             }
         }
 
         $contentElementResults = [];
-        foreach ($elementsArray as $key => $results) {
+        foreach ($elementsArray as $grididentifier => $results) {
             foreach ($results as $key2 => $elements) {
                 if ($key2 === 'contentelements') {
                     foreach ($results[$key2] as $element) {
@@ -262,26 +263,26 @@ class MigrationRepository extends Repository
                                 $queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
                             )
                             ->execute()
-                            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
+                            ->fetchAllAssociative();
                         foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
                         }
-                        $contentElementResults[$key]['elements'][$element['uid']] = $contentElements;
-                        $contentElementResults[$key]['columns'] = $results['columns'];
+                        $contentElementResults[$grididentifier]['elements'][$element['uid']] = $contentElements;
+                        $contentElementResults[$grididentifier]['columns'] = $results['columns'];
                     }
                 }
             }
         }
 
-        foreach ($contentElementResults as $grids) {
-            foreach ($grids as $key => $contents) {
+        foreach ($contentElementResults as $grididentifier) {
+            foreach ($grididentifier as $key => $contents) {
                 if ($key === 'columns') {
-                    foreach ($grids[$key] as $key2 => $column) {
-                        foreach ($grids['elements'] as $key3 => $elements) {
+                    foreach ($grididentifier[$key] as $key2 => $column) {
+                        foreach ($grididentifier['elements'] as $key3 => $elements) {
                             foreach ($elements as $element) {
-                                if ($element['tx_gridelements_columns'] == $key2) {
+                                if ($element['tx_gridelements_columns'] === $key2) {
 
-                                    if (empty($column['sameCid'])) {
+                                    if ($column['sameCid'] === null) {
                                         if (empty($column['columnid'])) {
                                             $colPos = 0;
                                         } else {
@@ -290,7 +291,8 @@ class MigrationRepository extends Repository
                                     } else {
                                         $colPos = $column['sameCid'];
                                     }
-                                    if (isset($element['l18nParent']) && (int)$element['l18nParent'] > 0) {
+
+                                    if (isset($element['l18nParent']) && (int)$element['l18nParent'] >= 0) {
                                         $txContainerParent = $contentElementResults['parents'][$element['l18n_parent']];
                                     } else {
                                         $txContainerParent = $key3;
