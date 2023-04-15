@@ -35,7 +35,7 @@ class MigrationRepository extends Repository
      * @return array|QueryResultInterface
      * @throws DBALException
      */
-    public function findGridelements(): QueryResultInterface|array
+    public function findGridelements(): QueryResultInterface
     {
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
