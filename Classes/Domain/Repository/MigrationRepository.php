@@ -33,6 +33,12 @@ class MigrationRepository extends Repository
     protected string $table = 'tt_content';
     protected LoggerInterface $logger;
 
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        parent::__construct($logger);
+    }
+
     /**
      *
      * @return array|QueryResultInterface
