@@ -248,7 +248,16 @@ class MigrationRepository extends Repository
         foreach ($elementsArray as $grididentifier => $elements) {
             if ($elementsArray[$grididentifier]['active'] === 1) {
                 $elementsArray[$grididentifier]['contentelements'] = $queryBuilder
-                    ->select('*')
+                    ->select(
+                        'uid',
+                        'CType',
+                        'colPos',
+                        'tx_gridelements_backend_layout',
+                        'tx_gridelements_container',
+                        'tx_gridelements_columns',
+                        'tx_container_parent',
+                        'pi_flexform'
+                    )
                     ->from($this->table)
                     ->where(
                         $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'),
@@ -274,7 +283,16 @@ class MigrationRepository extends Repository
                         $queryBuilder = $connection->createQueryBuilder();
                         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
                         $contentElements = $queryBuilder
-                            ->select('*')
+                            ->select(
+                                'uid',
+                                'CType',
+                                'colPos',
+                                'tx_gridelements_backend_layout',
+                                'tx_gridelements_container',
+                                'tx_gridelements_columns',
+                                'tx_container_parent',
+                                'pi_flexform'
+                            )
                             ->from($this->table)
                             ->where(
                                 $queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
@@ -374,6 +392,9 @@ class MigrationRepository extends Repository
                 }
             }
         }
+
+        $this->logger->info('End updateAllElements');
+
         return true;
     }
 }
