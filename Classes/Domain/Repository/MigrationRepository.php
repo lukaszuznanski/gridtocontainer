@@ -256,7 +256,8 @@ class MigrationRepository extends Repository
                         'tx_gridelements_container',
                         'tx_gridelements_columns',
                         'tx_container_parent',
-                        'pi_flexform'
+                        'pi_flexform',
+                        'l18nParent'
                     )
                     ->from($this->table)
                     ->where(
@@ -303,7 +304,8 @@ class MigrationRepository extends Repository
                                 'tx_gridelements_container',
                                 'tx_gridelements_columns',
                                 'tx_container_parent',
-                                'pi_flexform'
+                                'pi_flexform',
+                                'l18nParent'
                             )
                             ->from($this->table)
                             ->where(
@@ -350,7 +352,7 @@ class MigrationRepository extends Repository
                                         $colPos = $column['sameCid'];
                                     }
 
-                                    if (isset($element['l18nParent']) && (int)$element['l18nParent'] >= 0) {
+                                    if (isset($element['l18nParent']) && (int)$element['l18nParent'] > 0) {
                                         $txContainerParent = $contentElementResults['parents'][$element['l18n_parent']];
                                     } else {
                                         $txContainerParent = $key3;
@@ -361,8 +363,8 @@ class MigrationRepository extends Repository
                                     $updateCols = [
                                         'colPos' => $colPos,
                                         'tx_container_parent' => $txContainerParent,
-                                        'tx_gridelements_container' => 0,
-                                        'tx_gridelements_columns' => 0
+                                        //'tx_gridelements_container' => 0,
+                                        //'tx_gridelements_columns' => 0
                                     ];
 
                                     $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateCols);
@@ -411,6 +413,112 @@ class MigrationRepository extends Repository
                     }
                 }
             }
+        }
+
+        // select elements
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
+        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
+        $dataArray = $queryBuilder
+            ->select(
+                'uid',
+                'CType',
+                'colPos',
+                'tx_gridelements_columns',
+                'tx_gridelements_container',
+                'tx_container_parent'
+            )
+            ->from($this->table)
+            ->where(
+                $queryBuilder->expr()->eq('colPos',
+                    $queryBuilder->createNamedParameter(-1)
+                )
+            )
+            ->orWhere(
+                $queryBuilder->expr()->eq('colPos',
+                    $queryBuilder->createNamedParameter(-2)
+                )
+            )
+            ->execute()
+            ->fetchAllAssociative();
+
+        foreach ($dataArray as $dataElement) {
+            $this->logger->info('Select '.$this->table.' whare colPos=-1 OR colPos=-2', $dataElement);
+        }
+
+        // select parents elemenets
+        $queryBuilder = $connection->createQueryBuilder();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
+        foreach ($dataArray as $elementKey => $dataElement) {
+            $parentContentElements = $queryBuilder
+                ->select(
+                    'uid',
+                    'CType',
+                    'colPos',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_container',
+                    'tx_gridelements_columns',
+                    'tx_container_parent',
+                    'pi_flexform',
+                    'l18nParent'
+                )
+                ->from($this->table)
+                ->where(
+                    $queryBuilder->expr()->eq('tx_gridelements_container', $dataElement['uid'])
+                )
+                ->execute()
+                ->fetchAllAssociative();
+
+            $dataArray[$elementKey]['parent'] = $parentContentElements;
+
+            $this->logger->info('Select parent elements'.$this->table.' whare colPos=-1 OR colPos=-2', $parentContentElements);
+        }
+
+        // uodate contents (colPos) for content && parent
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+        foreach ($dataArray as $elementKey => $element) {
+
+            if (!empty($element['tx_gridelements_columns'])) {
+                $colPos = $element['tx_gridelements_columns'];
+            } else {
+                $colPos = 0;
+            }
+
+            if (isset($element['l18nParent']) && (int)$element['l18nParent'] >= 0) {
+                $txContainerParent = (int)$element['l18nParent'];
+            } else {
+                $txContainerParent = $elementKey;
+            }
+
+            $connection->update(
+                $this->table,
+                [
+                    'colPos' => $colPos,
+                    'tx_container_parent' => $txContainerParent
+                ],
+                [
+                    'uid' => $element['uid']
+                ]
+            );
+        }
+
+        // update grid columns to 0
+        foreach ($dataArray as $element) {
+            $connection->update(
+                $this->table,
+                [
+                    'tx_gridelements_columns' => 0,
+                    'tx_gridelements_container' => 0
+                ],
+                [
+                    'uid' => $element['uid']
+                ]
+            );
         }
 
         $this->logger->info('End updateAllElements');
