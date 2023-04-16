@@ -31,6 +31,7 @@ use Psr\Log\LoggerInterface;
 class MigrationRepository extends Repository
 {
     protected string $table = 'tt_content';
+    public LoggerInterface $logger;
 
     /**
      *
@@ -222,9 +223,9 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function updateAllElements($elementsArray, LoggerInterface $logger): bool
+    public function updateAllElements($elementsArray): bool
     {
-        $logger->info('Start updateAllElements');
+        $this->logger->info('Start updateAllElements');
 
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
@@ -244,7 +245,7 @@ class MigrationRepository extends Repository
                     )
                     ->execute()
                     ->fetchAllAssociative();
-                $logger->info('Select gridelements_pi: add select: \n' . print_r($elementsArray[$grididentifier]['contentelements'], true));
+                $this->logger->info('Select gridelements_pi: add select: \n' . print_r($elementsArray[$grididentifier]['contentelements'], true));
             } else {
                 unset($elementsArray[$grididentifier]);
             }
@@ -268,7 +269,7 @@ class MigrationRepository extends Repository
                             ->execute()
                             ->fetchAllAssociative();
 
-                        $logger->info('Select tx_gridelements_container: add select: \n' . print_r($contentElements, true));
+                        $this->logger->info('Select tx_gridelements_container: add select: \n' . print_r($contentElements, true));
 
                         foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
@@ -313,7 +314,7 @@ class MigrationRepository extends Repository
                                         'tx_gridelements_columns' => 0
                                     ];
 
-                                    $logger->info('Update '.$this->table.' whare UID=: '.$element['uid'].' Update content: \n' . print_r($updateCols, true));
+                                    $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'].' Update content: \n' . print_r($updateCols, true));
 
                                     $connection->update(
                                         $this->table,
