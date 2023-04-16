@@ -267,7 +267,16 @@ class MigrationRepository extends Repository
                     )
                     ->execute()
                     ->fetchAllAssociative();
-                $this->logger->info('Select gridelements_pi: add select', $elementsArray[$grididentifier]['contentelements']);
+
+                $logData = [
+                    'uid' => $elementsArray[$grididentifier]['contentelements']['uid'],
+                    'CType' => $elementsArray[$grididentifier]['contentelements']['CType'],
+                    'colPos' => $elementsArray[$grididentifier]['contentelements']['colPos'],
+                    'tx_gridelements_backend_layout' => $elementsArray[$grididentifier]['contentelements']['tx_gridelements_backend_layout'],
+                    'tx_gridelements_container' => $elementsArray[$grididentifier]['contentelements']['tx_gridelements_container'],
+                ];
+
+                $this->logger->info('Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$grididentifier, $logData);
             } else {
                 unset($elementsArray[$grididentifier]);
             }
@@ -300,7 +309,15 @@ class MigrationRepository extends Repository
                             ->execute()
                             ->fetchAllAssociative();
 
-                        $this->logger->info('Select tx_gridelements_container: add select', $contentElements);
+                        $logData = [
+                            'uid' => $contentElements['uid'],
+                            'CType' => $contentElements['CType'],
+                            'colPos' => $contentElements['colPos'],
+                            'tx_gridelements_backend_layout' => $contentElements['tx_gridelements_backend_layout'],
+                            'tx_gridelements_container' => $contentElements['tx_gridelements_container'],
+                        ];
+
+                        $this->logger->info('Select where tx_gridelements_container='.$element['uid'], $logData);
 
                         foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
@@ -345,7 +362,7 @@ class MigrationRepository extends Repository
                                         'tx_gridelements_columns' => 0
                                     ];
 
-                                    $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'].' Update content', $updateCols);
+                                    $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateCols);
 
                                     $connection->update(
                                         $this->table,
