@@ -268,15 +268,18 @@ class MigrationRepository extends Repository
                     ->execute()
                     ->fetchAllAssociative();
 
-                $logData = [
-                    'uid' => $elementsArray[$grididentifier]['contentelements']['uid'],
-                    'CType' => $elementsArray[$grididentifier]['contentelements']['CType'],
-                    'colPos' => $elementsArray[$grididentifier]['contentelements']['colPos'],
-                    'tx_gridelements_backend_layout' => $elementsArray[$grididentifier]['contentelements']['tx_gridelements_backend_layout'],
-                    'tx_gridelements_container' => $elementsArray[$grididentifier]['contentelements']['tx_gridelements_container'],
-                ];
+                foreach ($elementsArray[$grididentifier]['contentelements'] as $_contentElement) {
+                    $logData = [
+                        'uid' => $_contentElement['uid'],
+                        'CType' => $_contentElement['CType'],
+                        'colPos' => $_contentElement['colPos'],
+                        'tx_gridelements_backend_layout' => $_contentElement['tx_gridelements_backend_layout'],
+                        'tx_gridelements_container' => $_contentElement['tx_gridelements_container'],
+                    ];
 
-                $this->logger->info('Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$grididentifier, $logData);
+                    $this->logger->info('Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$grididentifier, $logData);
+                }
+
             } else {
                 unset($elementsArray[$grididentifier]);
             }
@@ -309,18 +312,18 @@ class MigrationRepository extends Repository
                             ->execute()
                             ->fetchAllAssociative();
 
-                        $logData = [
-                            'uid' => $contentElements['uid'],
-                            'CType' => $contentElements['CType'],
-                            'colPos' => $contentElements['colPos'],
-                            'tx_gridelements_backend_layout' => $contentElements['tx_gridelements_backend_layout'],
-                            'tx_gridelements_container' => $contentElements['tx_gridelements_container'],
-                        ];
-
-                        $this->logger->info('Select where tx_gridelements_container='.$element['uid'], $logData);
-
                         foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
+
+                            $logData = [
+                                'uid' => $contentElement['uid'],
+                                'CType' => $contentElement['CType'],
+                                'colPos' => $contentElement['colPos'],
+                                'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
+                                'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
+                            ];
+
+                            $this->logger->info('Select where tx_gridelements_container='.$element['uid'], $logData);
                         }
                         $contentElementResults[$grididentifier]['elements'][$element['uid']] = $contentElements;
                         $contentElementResults[$grididentifier]['columns'] = $results['columns'];
