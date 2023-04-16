@@ -450,11 +450,9 @@ class MigrationRepository extends Repository
         $dataArray = $queryBuilder
             ->select(
                 'uid',
-                'CType',
                 'colPos',
                 'tx_gridelements_columns',
-                'tx_gridelements_container',
-                'tx_container_parent'
+                'tx_gridelements_container'
             )
             ->from($this->table)
             ->where(
@@ -474,62 +472,42 @@ class MigrationRepository extends Repository
             $this->logger->info('Select '.$this->table.' whare colPos=-1 OR colPos=-2', $dataElement);
         }
 
-        // select parents elemenets
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $queryBuilder = $connection->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        foreach ($dataArray as $elementKey => $dataElement) {
-            $parentContentElements = $queryBuilder
-                ->select(
-                    'uid',
-                    'CType',
-                    'colPos',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_container',
-                    'tx_gridelements_columns',
-                    'tx_container_parent',
-                    'pi_flexform',
-                    //'l18nParent'
-                )
-                ->from($this->table)
-                ->where(
-                    $queryBuilder->expr()->eq('tx_gridelements_container', $dataElement['uid'])
-                )
-                ->execute()
-                ->fetchAllAssociative();
-
-            $dataArray[$elementKey]['parent'] = $parentContentElements;
-
-            $this->logger->info('Select parent elements'.$this->table.' whare colPos=-1 OR colPos=-2', $parentContentElements);
-        }
-
         // update contents (colPos) for content && parent
-        foreach ($dataArray as $elementKey => $element) {
+        foreach ($dataArray as $element) {
 
-            if (!empty($element['tx_gridelements_columns'])) {
+            if (empty($element['uid'])) {
+                continue;
+            }
+
+            if (!empty($element['tx_gridelements_columns']) && $element['tx_gridelements_columns'] > 0) {
                 $colPos = $element['tx_gridelements_columns'];
             } else {
                 $colPos = 0;
             }
 
-            if (isset($element['l18nParent']) && (int)$element['l18nParent'] > 0) {
-                $txContainerParent = (int)$element['l18nParent'];
+            if (!empty($element['tx_gridelements_container']) && $element['tx_gridelements_container'] > 0) {
+                $tx_container_parent = $element['tx_gridelements_container'];
             } else {
-                $txContainerParent = $element['parent']['uid'];
+                $tx_container_parent = 0;
             }
+
+            /** @var Connection $connection */
+            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+            $updateData = [
+                'colPos' => $colPos,
+                'tx_container_parent' =>$tx_container_parent
+            ];
 
             $connection->update(
                 $this->table,
-                [
-                    'colPos' => $colPos,
-                    'tx_container_parent' => $txContainerParent
-                ],
+                $updateData,
                 [
                     'uid' => $element['uid']
                 ]
             );
+
+            $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateData);
 
             $connection->update(
                 $this->table,
