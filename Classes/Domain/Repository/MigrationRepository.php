@@ -225,6 +225,17 @@ class MigrationRepository extends Repository
      */
     public function updateAllElements($elementsArray): bool
     {
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
+            // configuration for ERROR level log entries
+            \TYPO3\CMS\Core\Log\LogLevel::INFO => [
+                // add a FileWriter
+                \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                    // configuration for the writer
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/typo3_grid_to_container_migration.log'
+                ]
+            ]
+        ];
+
         $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
 
         $this->logger->info('Start updateAllElements');
