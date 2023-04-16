@@ -256,8 +256,7 @@ class MigrationRepository extends Repository
                         'tx_gridelements_container',
                         'tx_gridelements_columns',
                         'tx_container_parent',
-                        'pi_flexform',
-                        'l18nParent'
+                        'pi_flexform'
                     )
                     ->from($this->table)
                     ->where(
@@ -305,7 +304,7 @@ class MigrationRepository extends Repository
                                 'tx_gridelements_columns',
                                 'tx_container_parent',
                                 'pi_flexform',
-                                'l18nParent'
+                                //'l18nParent'
                             )
                             ->from($this->table)
                             ->where(
@@ -363,8 +362,8 @@ class MigrationRepository extends Repository
                                     $updateCols = [
                                         'colPos' => $colPos,
                                         'tx_container_parent' => $txContainerParent,
-                                        //'tx_gridelements_container' => 0,
-                                        //'tx_gridelements_columns' => 0
+                                        'tx_gridelements_container' => 0,
+                                        'tx_gridelements_columns' => 0
                                     ];
 
                                     $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateCols);
@@ -492,7 +491,7 @@ class MigrationRepository extends Repository
                     'tx_gridelements_columns',
                     'tx_container_parent',
                     'pi_flexform',
-                    'l18nParent'
+                    //'l18nParent'
                 )
                 ->from($this->table)
                 ->where(
@@ -506,8 +505,7 @@ class MigrationRepository extends Repository
             $this->logger->info('Select parent elements'.$this->table.' whare colPos=-1 OR colPos=-2', $parentContentElements);
         }
 
-        // uodate contents (colPos) for content && parent
-
+        // update contents (colPos) for content && parent
         foreach ($dataArray as $elementKey => $element) {
 
             if (!empty($element['tx_gridelements_columns'])) {
@@ -516,10 +514,10 @@ class MigrationRepository extends Repository
                 $colPos = 0;
             }
 
-            if (isset($element['l18nParent']) && (int)$element['l18nParent'] >= 0) {
+            if (isset($element['l18nParent']) && (int)$element['l18nParent'] > 0) {
                 $txContainerParent = (int)$element['l18nParent'];
             } else {
-                $txContainerParent = $elementKey;
+                $txContainerParent = $element['parent']['uid'];
             }
 
             $connection->update(
@@ -532,10 +530,7 @@ class MigrationRepository extends Repository
                     'uid' => $element['uid']
                 ]
             );
-        }
 
-        // update grid columns to 0
-        foreach ($dataArray as $element) {
             $connection->update(
                 $this->table,
                 [
