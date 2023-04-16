@@ -31,13 +31,6 @@ use Psr\Log\LoggerInterface;
 class MigrationRepository extends Repository
 {
     protected string $table = 'tt_content';
-    protected LoggerInterface $logger;
-
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-        parent::__construct($logger);
-    }
 
     /**
      *
@@ -229,9 +222,9 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function updateAllElements($elementsArray): bool
+    public function updateAllElements($elementsArray, LoggerInterface $logger): bool
     {
-        $this->logger->info('Start updateAllElements');
+        $logger->info('Start updateAllElements');
 
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
@@ -251,7 +244,7 @@ class MigrationRepository extends Repository
                     )
                     ->execute()
                     ->fetchAllAssociative();
-                $this->logger->info('Select gridelements_pi: add select: \n' . print_r($elementsArray[$grididentifier]['contentelements'], true));
+                $logger->info('Select gridelements_pi: add select: \n' . print_r($elementsArray[$grididentifier]['contentelements'], true));
             } else {
                 unset($elementsArray[$grididentifier]);
             }
@@ -275,7 +268,7 @@ class MigrationRepository extends Repository
                             ->execute()
                             ->fetchAllAssociative();
 
-                        $this->logger->info('Select tx_gridelements_container: add select: \n' . print_r($contentElements, true));
+                        $logger->info('Select tx_gridelements_container: add select: \n' . print_r($contentElements, true));
 
                         foreach ($contentElements as $contentElement) {
                             $contentElementResults['parents'][$contentElement['uid']] = $contentElement['tx_gridelements_container'];
@@ -320,7 +313,7 @@ class MigrationRepository extends Repository
                                         'tx_gridelements_columns' => 0
                                     ];
 
-                                    $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'].' Update content: \n' . print_r($updateCols, true));
+                                    $logger->info('Update '.$this->table.' whare UID=: '.$element['uid'].' Update content: \n' . print_r($updateCols, true));
 
                                     $connection->update(
                                         $this->table,
