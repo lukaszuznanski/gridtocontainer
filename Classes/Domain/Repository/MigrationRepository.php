@@ -415,6 +415,33 @@ class MigrationRepository extends Repository
             }
         }
 
+        $this->logger->info('End updateAllElements');
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function updateContentElementsCommend(): bool
+    {
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
+            // configuration for ERROR level log entries
+            \TYPO3\CMS\Core\Log\LogLevel::INFO => [
+                // add a FileWriter
+                \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                    // configuration for the writer
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/typo3_grid_to_container_migration.log'
+                ]
+            ]
+        ];
+
+        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
+
+        $this->logger->info('Start updateContentElements');
+
         // select elements
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
@@ -449,6 +476,8 @@ class MigrationRepository extends Repository
         }
 
         // select parents elemenets
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
         $queryBuilder = $connection->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
@@ -478,8 +507,6 @@ class MigrationRepository extends Repository
         }
 
         // uodate contents (colPos) for content && parent
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
 
         foreach ($dataArray as $elementKey => $element) {
 
@@ -521,7 +548,7 @@ class MigrationRepository extends Repository
             );
         }
 
-        $this->logger->info('End updateAllElements');
+        $this->logger->info('End updateContentElements');
 
         return true;
     }
