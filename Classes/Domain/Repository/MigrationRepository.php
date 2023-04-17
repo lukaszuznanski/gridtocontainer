@@ -231,7 +231,7 @@ class MigrationRepository extends Repository
                 // add a FileWriter
                 \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
                     // configuration for the writer
-                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/typo3_grid_to_container_migration.log'
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/migrate-grid-to-container.typo3-package.log'
                 ]
             ]
         ];
@@ -433,7 +433,7 @@ class MigrationRepository extends Repository
                 // add a FileWriter
                 \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
                     // configuration for the writer
-                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/typo3_colpos_errors.log'
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/migrate-grid-to-container.typo3-package-errors.log'
                 ]
             ]
         ];
