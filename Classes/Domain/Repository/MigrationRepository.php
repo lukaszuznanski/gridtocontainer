@@ -352,7 +352,8 @@ class MigrationRepository extends Repository
                                     }
 
                                     if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                                        //$txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                                        $txContainerParent = (int)$uidElements;
                                     } else {
                                         $txContainerParent = (int)$uidElements;
                                     }
@@ -362,8 +363,8 @@ class MigrationRepository extends Repository
                                     $updateCols = [
                                         'colPos' => $colPos,
                                         'tx_container_parent' => $txContainerParent,
-                                        'tx_gridelements_container' => 0,
-                                        'tx_gridelements_columns' => 0
+                                        //'tx_gridelements_container' => 0,
+                                        //'tx_gridelements_columns' => 0
                                     ];
 
                                     $this->logger->info('Update ' . $this->table . ' whare UID=: ' . $element['uid'], $updateCols);
