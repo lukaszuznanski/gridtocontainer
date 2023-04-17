@@ -352,8 +352,8 @@ class MigrationRepository extends Repository
                                     }
 
                                     if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                        //$txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
-                                        $txContainerParent = (int)$uidElements;
+                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                                        //$txContainerParent = (int)$uidElements;
                                     } else {
                                         $txContainerParent = (int)$uidElements;
                                     }
