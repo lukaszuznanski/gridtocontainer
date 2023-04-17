@@ -250,13 +250,21 @@ class MigrationRepository extends Repository
                 $elementsArray[$grididentifier]['contentelements'] = $queryBuilder
                     ->select(
                         'uid',
-                        'CType',
+                        'pid',
                         'colPos',
+                        'backupColPos',
+                        'CType',
                         'tx_gridelements_backend_layout',
                         'tx_gridelements_container',
                         'tx_gridelements_columns',
+                        'tx_gridelements_children',
                         'tx_container_parent',
-                        'pi_flexform'
+                        'l18n_parent',
+                        'hidden',
+                        'deleted',
+                        'header',
+                        'pi_flexform',
+                        'sys_language_uid ',
                     )
                     ->from($this->table)
                     ->where(
@@ -271,10 +279,16 @@ class MigrationRepository extends Repository
                 foreach ($elementsArray[$grididentifier]['contentelements'] as $_contentElement) {
                     $logData = [
                         'uid' => $_contentElement['uid'],
-                        'CType' => $_contentElement['CType'],
+                        'pid' => $_contentElement['pid'],
                         'colPos' => $_contentElement['colPos'],
+                        'backupColPos' => $_contentElement['backupColPos'],
+                        'CType' => $_contentElement['CType'],
                         'tx_gridelements_backend_layout' => $_contentElement['tx_gridelements_backend_layout'],
                         'tx_gridelements_container' => $_contentElement['tx_gridelements_container'],
+                        'tx_gridelements_columns' => $_contentElement['tx_gridelements_columns'],
+                        'tx_gridelements_children' => $_contentElement['tx_gridelements_children'],
+                        'l18n_parent' => $_contentElement['l18n_parent'],
+                        'sys_language_uid' => $_contentElement['sys_language_uid'],
                     ];
 
                     $this->logger->info('Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$grididentifier, $logData);
@@ -297,14 +311,21 @@ class MigrationRepository extends Repository
                         $contentElements = $queryBuilder
                             ->select(
                                 'uid',
-                                'CType',
+                                'pid',
                                 'colPos',
+                                'backupColPos',
+                                'CType',
                                 'tx_gridelements_backend_layout',
                                 'tx_gridelements_container',
                                 'tx_gridelements_columns',
+                                'tx_gridelements_children',
                                 'tx_container_parent',
+                                'l18n_parent',
+                                'hidden',
+                                'deleted',
+                                'header',
                                 'pi_flexform',
-                                'l18n_parent'
+                                'sys_language_uid ',
                             )
                             ->from($this->table)
                             ->where(
@@ -321,13 +342,16 @@ class MigrationRepository extends Repository
 
                             $logData = [
                                 'uid' => $contentElement['uid'],
-                                'CType' => $contentElement['CType'],
+                                'pid' => $contentElement['pid'],
                                 'colPos' => $contentElement['colPos'],
+                                'backupColPos' => $contentElement['backupColPos'],
+                                'CType' => $contentElement['CType'],
                                 'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
                                 'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
                                 'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
-                                'tx_container_parent' => $contentElement['tx_container_parent'],
+                                'tx_gridelements_children' => $contentElement['tx_gridelements_children'],
                                 'l18n_parent' => $contentElement['l18n_parent'],
+                                'sys_language_uid' => $contentElement['sys_language_uid'],
                             ];
 
                             $this->logger->info('Select where tx_gridelements_container='.$element['uid'], $logData);
