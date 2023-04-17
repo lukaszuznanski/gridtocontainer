@@ -310,6 +310,9 @@ class MigrationRepository extends Repository
                             ->where(
                                 $queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
                             )
+                            ->orWhere(
+                                $queryBuilder->expr()->eq('l18n_parent', $element['uid'])
+                            )
                             ->execute()
                             ->fetchAllAssociative();
 
