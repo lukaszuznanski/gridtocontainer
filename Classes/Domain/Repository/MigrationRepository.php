@@ -334,45 +334,49 @@ class MigrationRepository extends Repository
         }
 
         foreach ($contentElementResults as $grididentifier) {
-            foreach ($grididentifier['columns'] as $oldColumnId => $newColumnId) {
-                foreach ($grididentifier['elements'] as $uidElements => $elements) {
-                    foreach ($elements as $element) {
-                        if ((int)$element['tx_gridelements_columns'] === (int)$oldColumnId) {
+            foreach ($grididentifier as $key => $contents) {
+                if ($key === 'columns') {
+                    foreach ($grididentifier[$key] as $oldColumnId => $newColumnId) {
+                        foreach ($grididentifier['elements'] as $uidElements => $elements) {
+                            foreach ($elements as $element) {
+                                if ((int)$element['tx_gridelements_columns'] === (int)$oldColumnId) {
 
-                            if ($newColumnId['sameCid'] === null) {
-                                if (empty($newColumnId['columnid'])) {
-                                    $colPos = 0;
-                                } else {
-                                    $colPos = $newColumnId['columnid'];
+                                    if ($newColumnId['sameCid'] === null) {
+                                        if (empty($newColumnId['columnid'])) {
+                                            $colPos = 0;
+                                        } else {
+                                            $colPos = $newColumnId['columnid'];
+                                        }
+                                    } else {
+                                        $colPos = $newColumnId['sameCid'];
+                                    }
+
+                                    if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                                    } else {
+                                        $txContainerParent = (int)$uidElements;
+                                    }
+                                    /** @var Connection $connection */
+                                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+                                    $updateCols = [
+                                        'colPos' => $colPos,
+                                        'tx_container_parent' => $txContainerParent,
+                                        'tx_gridelements_container' => 0,
+                                        'tx_gridelements_columns' => 0
+                                    ];
+
+                                    $this->logger->info('Update ' . $this->table . ' whare UID=: ' . $element['uid'], $updateCols);
+
+                                    $connection->update(
+                                        $this->table,
+                                        $updateCols,
+                                        [
+                                            'uid' => $element['uid']
+                                        ]
+                                    );
                                 }
-                            } else {
-                                $colPos = $newColumnId['sameCid'];
                             }
-
-                            if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
-                            } else {
-                                $txContainerParent = (int)$uidElements;
-                            }
-                            /** @var Connection $connection */
-                            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
-                            $updateCols = [
-                                'colPos' => $colPos,
-                                'tx_container_parent' => $txContainerParent,
-                                'tx_gridelements_container' => 0,
-                                'tx_gridelements_columns' => 0
-                            ];
-
-                            $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateCols);
-
-                            $connection->update(
-                                $this->table,
-                                $updateCols,
-                                [
-                                    'uid' => $element['uid']
-                                ]
-                            );
                         }
                     }
                 }
