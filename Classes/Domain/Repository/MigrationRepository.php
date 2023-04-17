@@ -56,6 +56,28 @@ class MigrationRepository extends Repository
     }
 
     /**
+     *
+     * @return array
+     * @throws DBALException
+     */
+    public function findGridelementsCustom(): array
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
+        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
+        return $queryBuilder
+            ->select('*')
+            ->from($this->table)
+            ->where(
+                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+            )
+            ->execute()
+            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
+    }
+
+    /**
      * @param $id
      * @return array
      * @throws DBALException
@@ -167,28 +189,6 @@ class MigrationRepository extends Repository
     }
 
     /**
-     *
-     * @return array
-     * @throws DBALException
-     */
-    public function findGridelementsCustom(): array
-    {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
-        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $queryBuilder
-            ->select('*')
-            ->from($this->table)
-            ->where(
-                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
-            )
-            ->execute()
-            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-    }
-
-    /**
      * @param $gridElementsArray
      * @return array
      * @throws DBALException
@@ -204,13 +204,13 @@ class MigrationRepository extends Repository
             $contentElements[$id['uid']] = $this->findContentfromGridElements($id['uid']);
         }
         $contentElementsArray = [];
-        foreach ($contentElements as $key => $contentElement) {
+        foreach ($contentElements as $id2 => $contentElement) {
             if (empty($contentElement)) {
                 continue;
             }
 
             foreach ($contentElement as $cElement) {
-                $contentElementsArray[$key][$cElement['tx_gridelements_columns']] = $contentElement;
+                $contentElementsArray[$id2][$cElement['tx_gridelements_columns']] = $contentElement;
             }
         }
 
@@ -304,7 +304,7 @@ class MigrationRepository extends Repository
                                 'tx_gridelements_columns',
                                 'tx_container_parent',
                                 'pi_flexform',
-                                //'l18nParent'
+                                'l18n_parent'
                             )
                             ->from($this->table)
                             ->where(
@@ -334,49 +334,45 @@ class MigrationRepository extends Repository
         }
 
         foreach ($contentElementResults as $grididentifier) {
-            foreach ($grididentifier as $key => $contents) {
-                if ($key === 'columns') {
-                    foreach ($grididentifier[$key] as $key2 => $column) {
-                        foreach ($grididentifier['elements'] as $key3 => $elements) {
-                            foreach ($elements as $element) {
-                                if ($element['tx_gridelements_columns'] === $key2) {
+            foreach ($grididentifier['columns'] as $oldColumnId => $newColumnId) {
+                foreach ($grididentifier['elements'] as $uidElements => $elements) {
+                    foreach ($elements as $element) {
+                        if ((int)$element['tx_gridelements_columns'] === (int)$oldColumnId) {
 
-                                    if ($column['sameCid'] === null) {
-                                        if (empty($column['columnid'])) {
-                                            $colPos = 0;
-                                        } else {
-                                            $colPos = $column['columnid'];
-                                        }
-                                    } else {
-                                        $colPos = $column['sameCid'];
-                                    }
-
-                                    if (isset($element['l18nParent']) && (int)$element['l18nParent'] > 0) {
-                                        $txContainerParent = $contentElementResults['parents'][$element['l18n_parent']];
-                                    } else {
-                                        $txContainerParent = $key3;
-                                    }
-                                    /** @var Connection $connection */
-                                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
-                                    $updateCols = [
-                                        'colPos' => $colPos,
-                                        'tx_container_parent' => $txContainerParent,
-                                        'tx_gridelements_container' => 0,
-                                        'tx_gridelements_columns' => 0
-                                    ];
-
-                                    $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateCols);
-
-                                    $connection->update(
-                                        $this->table,
-                                        $updateCols,
-                                        [
-                                            'uid' => $element['uid']
-                                        ]
-                                    );
+                            if ($newColumnId['sameCid'] === null) {
+                                if (empty($newColumnId['columnid'])) {
+                                    $colPos = 0;
+                                } else {
+                                    $colPos = $newColumnId['columnid'];
                                 }
+                            } else {
+                                $colPos = $newColumnId['sameCid'];
                             }
+
+                            if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                                $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                            } else {
+                                $txContainerParent = (int)$uidElements;
+                            }
+                            /** @var Connection $connection */
+                            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+                            $updateCols = [
+                                'colPos' => $colPos,
+                                'tx_container_parent' => $txContainerParent,
+                                'tx_gridelements_container' => 0,
+                                'tx_gridelements_columns' => 0
+                            ];
+
+                            $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateCols);
+
+                            $connection->update(
+                                $this->table,
+                                $updateCols,
+                                [
+                                    'uid' => $element['uid']
+                                ]
+                            );
                         }
                     }
                 }
@@ -424,7 +420,7 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function updateContentElementsCommend(): bool
+    public function logColPosErrors(): bool
     {
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
             // configuration for ERROR level log entries
@@ -432,14 +428,14 @@ class MigrationRepository extends Repository
                 // add a FileWriter
                 \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
                     // configuration for the writer
-                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/typo3_grid_to_container_migration.log'
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/typo3_colpos_errors.log'
                 ]
             ]
         ];
 
         $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
 
-        $this->logger->info('Start updateContentElements');
+        $this->logger->info('Start logColPosErrors');
 
         // select elements
         /** @var ConnectionPool $connectionPool */
@@ -450,9 +446,19 @@ class MigrationRepository extends Repository
         $dataArray = $queryBuilder
             ->select(
                 'uid',
+                'pid',
                 'colPos',
+                'backupColPos',
+                'CType',
+                'tx_container_parent',
                 'tx_gridelements_columns',
-                'tx_gridelements_container'
+                'tx_gridelements_container',
+                'tx_gridelements_backend_layout',
+                'tx_gridelements_children',
+                'l18n_parent',
+                'hidden',
+                'deleted',
+                'header',
             )
             ->from($this->table)
             ->where(
@@ -469,59 +475,10 @@ class MigrationRepository extends Repository
             ->fetchAllAssociative();
 
         foreach ($dataArray as $dataElement) {
-            $this->logger->info('Select '.$this->table.' whare colPos=-1 OR colPos=-2', $dataElement);
+            $this->logger->info('Error data: ', $dataElement);
         }
 
-        // update contents (colPos) for content && parent
-        foreach ($dataArray as $element) {
-
-            if (empty($element['uid'])) {
-                continue;
-            }
-
-            if (!empty($element['tx_gridelements_columns']) && $element['tx_gridelements_columns'] > 0) {
-                $colPos = $element['tx_gridelements_columns'];
-            } else {
-                $colPos = 0;
-            }
-
-            if (!empty($element['tx_gridelements_container']) && $element['tx_gridelements_container'] > 0) {
-                $tx_container_parent = $element['tx_gridelements_container'];
-            } else {
-                $tx_container_parent = 0;
-            }
-
-            /** @var Connection $connection */
-            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
-            $updateData = [
-                'colPos' => $colPos,
-                'tx_container_parent' =>$tx_container_parent
-            ];
-
-            $connection->update(
-                $this->table,
-                $updateData,
-                [
-                    'uid' => $element['uid']
-                ]
-            );
-
-            $this->logger->info('Update '.$this->table.' whare UID=: '.$element['uid'], $updateData);
-
-            $connection->update(
-                $this->table,
-                [
-                    'tx_gridelements_columns' => 0,
-                    'tx_gridelements_container' => 0
-                ],
-                [
-                    'uid' => $element['uid']
-                ]
-            );
-        }
-
-        $this->logger->info('End updateContentElements');
+        $this->logger->info('End logColPosErrors');
 
         return true;
     }

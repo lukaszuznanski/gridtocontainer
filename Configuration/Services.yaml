@@ -7,9 +7,9 @@ services:
         description: 'Migrate all from grid identifier e.g. ce_columns2'
         schedulable: false
 
-  SBublies\Gridtocontainer\Command\UpdateContentCommand:
+  SBublies\Gridtocontainer\Command\LogColPosErrorsCommand:
     tags:
       - name: 'console.command'
-        command: 'gridtocontainer:updatecontent'
+        command: 'gridtocontainer:logcolposerrors'
         description: 'Update content'
         schedulable: false

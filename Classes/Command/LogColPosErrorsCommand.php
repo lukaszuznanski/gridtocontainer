@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 
-class UpdateContentCommand extends Command
+class LogColPosErrorsCommand extends Command
 {
     /**
      * Configure the command by defining the name, options and arguments
@@ -51,7 +51,7 @@ class UpdateContentCommand extends Command
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         $migrationRepository = $objectManager->get(MigrationRepository::class);
 
-        $migrateAll = $migrationRepository->updateContentElementsCommend();
+        $migrateAll = $migrationRepository->logColPosErrors();
 
         if ($migrateAll) {
             $io->writeln('The migration content is completed');
