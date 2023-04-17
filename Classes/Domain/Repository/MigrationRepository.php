@@ -325,6 +325,9 @@ class MigrationRepository extends Repository
                                 'colPos' => $contentElement['colPos'],
                                 'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
                                 'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
+                                'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
+                                'tx_container_parent' => $contentElement['tx_container_parent'],
+                                'l18n_parent' => $contentElement['l18n_parent'],
                             ];
 
                             $this->logger->info('Select where tx_gridelements_container='.$element['uid'], $logData);
