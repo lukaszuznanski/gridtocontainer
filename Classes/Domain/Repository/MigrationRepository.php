@@ -337,9 +337,6 @@ class MigrationRepository extends Repository
                             ->orWhere(
                                 $queryBuilder->expr()->eq('l18n_parent', $element['uid'])
                             )
-                            ->orWhere(
-                                $queryBuilder->expr()->eq('l10n_parent', $element['uid'])
-                            )
                             ->execute()
                             ->fetchAllAssociative();
 
