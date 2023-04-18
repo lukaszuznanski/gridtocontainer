@@ -461,7 +461,7 @@ class MigrationRepository extends Repository
                                         'pid' => $element['pid'],
                                         'colPos' => $colPos,
                                         'backupColPos' => $element['backupColPos'],
-                                        'CType' => $gridIdentifier,
+                                        'CType' => $gridIdentifier['containername'],
                                         'tx_gridelements_backend_layout' => $element['tx_gridelements_backend_layout'],
                                         'tx_gridelements_container' => $element['tx_gridelements_container'],
                                         'tx_gridelements_columns' => $element['tx_gridelements_columns'],
