@@ -520,9 +520,9 @@ class MigrationRepository extends Repository
                         $connection->update(
                             $this->table,
                             [
-                                'colPos' => $colPos,
+                                //'colPos' => $colPos,
                                 'CType' => $gridIdentifier,
-                                'tx_container_parent' => $txContainerParent,
+                                //'tx_container_parent' => $txContainerParent,
                                 'pi_flexform' => $element['pi_flexform'],
                                 //'tx_gridelements_backend_layout' => ''
                             ],
