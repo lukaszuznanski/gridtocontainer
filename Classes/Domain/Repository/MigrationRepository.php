@@ -590,7 +590,7 @@ class MigrationRepository extends Repository
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        $dataArray = $queryBuilder
+        $elements = $queryBuilder
             ->select(
                 'uid',
                 'pid',
@@ -621,8 +621,31 @@ class MigrationRepository extends Repository
             ->execute()
             ->fetchAllAssociative();
 
-        foreach ($dataArray as $dataElement) {
-            $this->logger->info('Error data: ', $dataElement);
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+        foreach ($elements as $element) {
+            $this->logger->info('Error data: ', $element);
+
+            // próba fix error błędnych pozycji
+            if (isset($element['tx_gridelements_columns']) && (string)$element['tx_gridelements_columns'] !== '') {
+                $colPos = (int)$element['tx_gridelements_columns'];
+            } else {
+                $colPos = 0;
+            }
+
+            $connection->update(
+                $this->table,
+                [
+                    'colPos' => $colPos,
+                    //'CType' => $gridIdentifier,
+                    //'tx_container_parent' => $txContainerParent,
+                    //'tx_gridelements_backend_layout' => ''
+                ],
+                [
+                    'uid' => $element['uid']
+                ]
+            );
         }
 
         $this->logger->info('End logColPosErrors');
