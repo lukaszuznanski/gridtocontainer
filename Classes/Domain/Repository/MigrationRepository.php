@@ -410,58 +410,60 @@ class MigrationRepository extends Repository
 
         // update grid elementów
         /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+        //$connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
 
-        foreach ($elementsArray as $grididentifier) {
-            foreach ($grididentifier['contentelements'] as $elements) {
-                foreach ($elements as $element) {
 
-                    if ((int)$element['tx_gridelements_columns'] === 0) {
-                        $colPos = 0;
-                    } else if (isset($element['tx_gridelements_columns']) && (string)$element['tx_gridelements_columns'] !== '') {
-                        $colPos = (int)$grididentifier['columns'][(int)$element['tx_gridelements_columns']];
-                    } else {
-                        $colPos = 0;
-                    }
+        foreach ($elementsArray as $dataType => $grididentifier) {
+            if ($dataType === 'contentelements') {
+                foreach ($grididentifier as $gridElements) {
+                    foreach ($gridElements as $gridElement) {
 
-                    if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                        $txContainerParent = (int)$element['l18n_parent'];
-                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                        $txContainerParent = (int)$element['l10n_parent'];
-                    } else {
-                        $txContainerParent = (int)$element['tx_gridelements_container'];
-                    }
+                        if ((int)$gridElement['tx_gridelements_columns'] === 0) {
+                            $colPos = 0;
+                        } else if (isset($gridElement['tx_gridelements_columns']) && (string)$gridElement['tx_gridelements_columns'] !== '') {
+                            $colPos = (int)$grididentifier['columns'][(int)$gridElement['tx_gridelements_columns']];
+                        } else {
+                            $colPos = 0;
+                        }
 
-                    /*
-                    $connection->update(
-                        $this->table,
-                        [
+                        if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
+                            $txContainerParent = (int)$gridElement['l18n_parent'];
+                        } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l10n_parent']) && (int)$gridElement['l10n_parent'] > 0) {
+                            $txContainerParent = (int)$gridElement['l10n_parent'];
+                        } else {
+                            $txContainerParent = (int)$gridElement['tx_gridelements_container'];
+                        }
+
+                        /*
+                        $connection->update(
+                            $this->table,
+                            [
+                                'colPos' => $colPos,
+                                'CType' => $gridElement['containername'],
+                                'tx_container_parent' => $txContainerParent,
+                                'pi_flexform' => $element['pi_flexform'],
+                                //'tx_gridelements_backend_layout' => ''
+                            ],
+                            [
+                                'uid' => $element['uid']
+                            ]
+                        );
+                        */
+
+                        $updateCols = [
+                            'uid' => $gridElement['uid'],
                             'colPos' => $colPos,
-                            'CType' => $element['containername'],
+                            'CType' => $grididentifier['containername'],
                             'tx_container_parent' => $txContainerParent,
-                            'pi_flexform' => $element['pi_flexform'],
-                            //'tx_gridelements_backend_layout' => ''
-                        ],
-                        [
-                            'uid' => $element['uid']
-                        ]
-                    );
-                    */
+                            //'pi_flexform' => $element['pi_flexform'],
+                            'tx_gridelements_backend_layout' => ''
+                        ];
 
-                    $updateCols = [
-                        'uid' => $element['uid'],
-                        'colPos' => $colPos,
-                        'CType' => $grididentifier['containername'],
-                        'tx_container_parent' => $txContainerParent,
-                        //'pi_flexform' => $element['pi_flexform'],
-                        'tx_gridelements_backend_layout' => ''
-                    ];
-
-                    $this->logger->info('Update ' . $this->table . ' whare UID=' . $element['uid'], $updateCols);
+                        $this->logger->info('Update ' . $this->table . ' whare UID=' . $gridElement['uid'], $updateCols);
+                    }
                 }
             }
         }
-
 
         $this->logger->info('End updateAllElements');
 
