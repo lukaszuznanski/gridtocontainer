@@ -419,8 +419,8 @@ class MigrationRepository extends Repository
                             foreach ($elements as $element) {
                                 if ((int)$element['colPos'] === 0) {
                                     $colPos = 0;
-                                } else if (isset($element['tx_gridelements_columns']) && (string)$element['tx_gridelements_columns'] !== '') {
-                                    $colPos = (int)$contentElementResults[$gridIdentifier]['columns'][(int)$element['tx_gridelements_columns']]['columnid'];
+                                } else if (isset($element['tx_gridelements_columns']) && (string)$element['tx_gridelements_columns'] !== '' && (int)$element['tx_gridelements_columns'] === $oldColumnId) {
+                                    $colPos = (int)$newColumnId['columnid'];
                                 } else {
                                     $colPos = 0;
                                 }
