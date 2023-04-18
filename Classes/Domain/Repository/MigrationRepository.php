@@ -424,6 +424,10 @@ class MigrationRepository extends Repository
                                     if ($newColumnId['sameCid'] === null) {
                                         if (empty($newColumnId['columnid'])) {
                                             $colPos = 0;
+                                        }
+                                        else if ((int)$element['colPos'] === 0) {
+                                            // jeżeli colPos = 0, po migracji colPos = 0
+                                            $colPos = 0;
                                         } else {
                                             $colPos = $newColumnId['columnid'];
                                         }
@@ -431,12 +435,16 @@ class MigrationRepository extends Repository
                                         $colPos = $newColumnId['sameCid'];
                                     }
 
-                                    if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                                    if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
                                         $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
-                                    } else if (isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
+                                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
                                         $txContainerParent = (int)$contentElementResults['parents'][$element['l10n_parent']];
                                     } else {
-                                        $txContainerParent = (int)$uidElements;
+                                        if ($colPos === 0) {
+                                            $txContainerParent = (int)$uidElements;
+                                        } else {
+                                            $txContainerParent = (int)$uidElements * 100;
+                                        }
                                     }
 
                                     /** @var Connection $connection */
