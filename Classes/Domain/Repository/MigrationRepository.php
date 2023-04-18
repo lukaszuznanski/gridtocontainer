@@ -428,13 +428,14 @@ class MigrationRepository extends Repository
                                         $colPos = 0;
                                     }
 
-                                    // tłumaczenie nie może mieć ustawiony tx_container_parent, musi być == 0
-                                    if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                        //$txContainerParent = (int)$element['l18n_parent'];
+                                    if ((int)$element['sys_language_uid'] > 0 && $colPos === 0) {
                                         $txContainerParent = 0;
+                                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                                        $txContainerParent = (int)$element['l18n_parent'];
+                                        //$txContainerParent = 0;
                                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                                        //$txContainerParent = (int)$element['l18n_parent'];
-                                        $txContainerParent = 0;
+                                        $txContainerParent = (int)$element['l18n_parent'];
+                                        //$txContainerParent = 0;
                                     } else if ($colPos === 0) {
                                         $txContainerParent = (int)$element['tx_gridelements_container'];
                                     } else {
