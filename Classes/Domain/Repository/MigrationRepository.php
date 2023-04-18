@@ -431,10 +431,12 @@ class MigrationRepository extends Repository
                                     if ((int)$element['sys_language_uid'] > 0 && $colPos === 0) {
                                         $txContainerParent = 0;
                                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                        $txContainerParent = (int)$element['l18n_parent'];
+                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                                        //$txContainerParent = (int)$element['l18n_parent'];
                                         //$txContainerParent = 0;
                                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                                        $txContainerParent = (int)$element['l18n_parent'];
+                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l10n_parent']];
+                                        //$txContainerParent = (int)$element['l10n_parent'];
                                         //$txContainerParent = 0;
                                     } else if ($colPos === 0) {
                                         $txContainerParent = (int)$element['tx_gridelements_container'];
@@ -504,10 +506,12 @@ class MigrationRepository extends Repository
                         if ((int)$gridElement['sys_language_uid'] > 0 && $colPos === 0) {
                             $txContainerParent = 0;
                         } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
-                            $txContainerParent = (int)$gridElement['l18n_parent'];
+                            $txContainerParent = (int)$contentElementResults['parents'][$gridElement['l18n_parent']];
+                            //$txContainerParent = (int)$gridElement['l18n_parent'];
                             //$txContainerParent = 0;
                         } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l10n_parent']) && (int)$gridElement['l10n_parent'] > 0) {
-                            $txContainerParent = (int)$gridElement['l10n_parent'];
+                            $txContainerParent = (int)$contentElementResults['parents'][$gridElement['l10n_parent']];
+                            //$txContainerParent = (int)$gridElement['l10n_parent'];
                             //$txContainerParent = 0;
                         } else {
                             $txContainerParent = (int)$gridElement['tx_gridelements_container'];
