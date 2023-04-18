@@ -450,16 +450,21 @@ class MigrationRepository extends Repository
                         );
                         */
 
-                        $updateCols = [
+                        $logData = [
                             'uid' => $gridElement['uid'],
-                            'colPos' => $colPos,
-                            'CType' => $gridIdentifier,
-                            'tx_container_parent' => $txContainerParent,
-                            //'pi_flexform' => $element['pi_flexform'],
-                            'tx_gridelements_backend_layout' => ''
+                            'pid' => $gridElement['pid'],
+                            'colPos' => $gridElement['colPos'],
+                            'backupColPos' => $gridElement['backupColPos'],
+                            'CType' => $gridElement['CType'],
+                            'tx_gridelements_backend_layout' => $gridElement['tx_gridelements_backend_layout'],
+                            'tx_gridelements_container' => $gridElement['tx_gridelements_container'],
+                            'tx_gridelements_columns' => $gridElement['tx_gridelements_columns'],
+                            'tx_gridelements_children' => $gridElement['tx_gridelements_children'],
+                            'l18n_parent' => $gridElement['l18n_parent'],
+                            'sys_language_uid' => $gridElement['sys_language_uid'],
                         ];
 
-                        $this->logger->info('Update ' . $this->table . ' whare UID=' . $gridElement['uid'], $updateCols);
+                        $this->logger->info('Update ' . $this->table . ' whare UID=' . $gridElement['uid'], $logData);
                     }
                 }
             }
