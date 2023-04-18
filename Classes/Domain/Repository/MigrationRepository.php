@@ -421,7 +421,7 @@ class MigrationRepository extends Repository
                         if ((int)$gridElement['tx_gridelements_columns'] === 0) {
                             $colPos = 0;
                         } else if (isset($gridElement['tx_gridelements_columns']) && (string)$gridElement['tx_gridelements_columns'] !== '') {
-                            $colPos = (int)$grididentifier['columns'][(int)$gridElement['tx_gridelements_columns']];
+                            $colPos = (int)$elementsArray[$gridIdentifier]['columns'][(int)$gridElement['tx_gridelements_columns']]['columnid'];
                         } else {
                             $colPos = 0;
                         }
