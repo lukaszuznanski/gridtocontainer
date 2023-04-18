@@ -429,9 +429,9 @@ class MigrationRepository extends Repository
                                     }
 
                                     if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
+                                        $txContainerParent = (int)$element['l18n_parent'];
                                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l10n_parent']];
+                                        $txContainerParent = (int)$element['l18n_parent'];
                                     } else if ($colPos === 0) {
                                         $txContainerParent = (int)$element['tx_gridelements_container'];
                                     } else {
