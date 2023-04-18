@@ -453,7 +453,7 @@ class MigrationRepository extends Repository
                         $updateCols = [
                             'uid' => $gridElement['uid'],
                             'colPos' => $colPos,
-                            'CType' => $gridIdentifier['containername'],
+                            'CType' => $gridIdentifier,
                             'tx_container_parent' => $txContainerParent,
                             //'pi_flexform' => $element['pi_flexform'],
                             'tx_gridelements_backend_layout' => ''
