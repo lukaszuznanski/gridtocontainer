@@ -245,6 +245,7 @@ class MigrationRepository extends Repository
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
+        // pobranie określonych grid elements (np. 1-1, 1-2_1-2 ...)
         foreach ($elementsArray as $grididentifier => $elements) {
             if ($elementsArray[$grididentifier]['active'] === 1) {
                 $elementsArray[$grididentifier]['contentelements'] = $queryBuilder
@@ -299,7 +300,7 @@ class MigrationRepository extends Repository
             }
         }
 
-        // get content from gridelement container
+        // pobranie osadzonych elementów w pobranych gri elements
         $contentElementResults = [];
         foreach ($elementsArray as $grididentifier => $results) {
             foreach ($results as $key2 => $elements) {
@@ -407,99 +408,60 @@ class MigrationRepository extends Repository
          * t3_origuid - wypełniane podczas kopiowania lub tłumaczenia rekordu i zawiera identyfikator rekordu źródłowego
          */
 
-        foreach ($contentElementResults as $grididentifier) {
-            foreach ($grididentifier as $key => $contents) {
-                if ($key === 'columns') {
-                    foreach ($grididentifier[$key] as $oldColumnId => $newColumnId) {
-                        foreach ($grididentifier['elements'] as $uidElements => $elements) {
-                            foreach ($elements as $element) {
-                                if ((int)$element['tx_gridelements_columns'] === (int)$oldColumnId) {
-
-                                    if ($newColumnId['sameCid'] === null) {
-                                        if (empty($newColumnId['columnid'])) {
-                                            $colPos = 0;
-                                        }
-                                        else if ((int)$element['colPos'] === 0) {
-                                            // jeżeli colPos = 0, po migracji colPos = 0
-                                            $colPos = 0;
-                                        }
-                                        else if ((int)$oldColumnId === 0) {
-                                            $colPos = 0;
-                                        } else {
-                                            $colPos = $newColumnId['columnid'];
-                                        }
-                                    } else {
-                                        $colPos = $newColumnId['sameCid'];
-                                    }
-
-                                    // pozycja jest tłumaczeniem
-                                    if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
-                                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l10n_parent']];
-                                    } else if ($colPos === 0) {
-                                        $txContainerParent = (int)$element['tx_gridelements_container'];
-                                    } else {
-                                        $txContainerParent = (int)$uidElements;
-                                    }
-
-                                    /** @var Connection $connection */
-                                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
-                                    $updateCols = [
-                                        'colPos' => $colPos,
-                                        'tx_container_parent' => $txContainerParent,
-                                        //'tx_gridelements_container' => 0,
-                                        //'tx_gridelements_columns' => 0
-                                    ];
-
-                                    $this->logger->info('Update ' . $this->table . ' whare UID=' . $element['uid'], $updateCols);
-
-                                    $connection->update(
-                                        $this->table,
-                                        $updateCols,
-                                        [
-                                            'uid' => $element['uid']
-                                        ]
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
+        // update grid elementów
         /** @var Connection $connection */
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        foreach ($elementsArray as $results) {
-            foreach ($results as $key => $elements) {
-                if ($key === 'contentelements') {
-                    foreach ($results[$key] as $element) {
-                        if (empty($results['cleanFlexForm'])) {
-                            if ($results['flexFormvalue'] === 1) {
-                                $flexformValue = $element['pi_flexform'];
-                            } else {
-                                $flexformValue = $results['flexFormvalue'];
-                            }
-                        } else {
-                            $flexformValue = '';
-                        }
-                        $connection->update(
-                            $this->table,
-                            [
-                                'CType' => $results['containername'],
-                                'pi_flexform' => $flexformValue,
-                                'tx_gridelements_backend_layout' => ''
-                            ],
-                            [
-                                'uid' => $element['uid']
-                            ]
-                        );
+
+        foreach ($elementsArray as $grididentifier) {
+            foreach ($grididentifier['contentelements'] as $elements) {
+                foreach ($elements as $element) {
+
+                    if ((int)$element['tx_gridelements_columns'] === 0) {
+                        $colPos = 0;
+                    } else if (isset($element['tx_gridelements_columns']) && (string)$element['tx_gridelements_columns'] !== '') {
+                        $colPos = (int)$grididentifier['columns'][(int)$element['tx_gridelements_columns']];
+                    } else {
+                        $colPos = 0;
                     }
+
+                    if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                        $txContainerParent = (int)$element['l18n_parent'];
+                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
+                        $txContainerParent = (int)$element['l10n_parent'];
+                    } else {
+                        $txContainerParent = (int)$element['tx_gridelements_container'];
+                    }
+
+                    /*
+                    $connection->update(
+                        $this->table,
+                        [
+                            'colPos' => $colPos,
+                            'CType' => $element['containername'],
+                            'tx_container_parent' => $txContainerParent,
+                            'pi_flexform' => $element['pi_flexform'],
+                            //'tx_gridelements_backend_layout' => ''
+                        ],
+                        [
+                            'uid' => $element['uid']
+                        ]
+                    );
+                    */
+
+                    $updateCols = [
+                        'uid' => $element['uid'],
+                        'colPos' => $colPos,
+                        'CType' => $grididentifier['containername'],
+                        'tx_container_parent' => $txContainerParent,
+                        //'pi_flexform' => $element['pi_flexform'],
+                        'tx_gridelements_backend_layout' => ''
+                    ];
+
+                    $this->logger->info('Update ' . $this->table . ' whare UID=' . $element['uid'], $updateCols);
                 }
             }
         }
+
 
         $this->logger->info('End updateAllElements');
 
