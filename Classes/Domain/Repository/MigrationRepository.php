@@ -418,6 +418,69 @@ class MigrationRepository extends Repository
          * t3_origuid - wypełniane podczas kopiowania lub tłumaczenia rekordu i zawiera identyfikator rekordu źródłowego
          */
 
+
+        // update grid elementów
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+        foreach ($elementsArray as $gridIdentifier => $gridsElements) {
+            foreach ($gridsElements as $dataType => $elements) {
+                if ($dataType === 'contentelements') {
+                    foreach ($gridsElements[$dataType] as $gridElement) {
+
+                        if ((int)$gridElement['colPos'] === 0) {
+                            $colPos = 0;
+                        } else if (isset($gridElement['tx_gridelements_columns']) && (string)$gridElement['tx_gridelements_columns'] !== '') {
+                            $colPos = (int)$elementsArray[$gridIdentifier]['columns'][(int)$gridElement['tx_gridelements_columns']]['columnid'];
+                        } else {
+                            $colPos = 0;
+                        }
+
+                        if ((int)$gridElement['sys_language_uid'] > 0 && $colPos === 0) {
+                            $txContainerParent = 0;
+                        } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
+                            $txContainerParent = (int)$contentElementResults['parents'][$gridElement['l18n_parent']];
+                        } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l10n_parent']) && (int)$gridElement['l10n_parent'] > 0) {
+                            $txContainerParent = (int)$contentElementResults['parents'][$gridElement['l10n_parent']];
+                        } else {
+                            $txContainerParent = (int)$gridElement['tx_gridelements_container'];
+                        }
+
+                        $connection->update(
+                            $this->table,
+                            [
+                                //'colPos' => $colPos,
+                                'CType' => $gridIdentifier,
+                                //'tx_container_parent' => $txContainerParent,
+                                'pi_flexform' => $element['pi_flexform'],
+                                //'tx_gridelements_backend_layout' => ''
+                            ],
+                            [
+                                'uid' => $gridElement['uid']
+                            ]
+                        );
+
+                        $logData = [
+                            'uid' => $gridElement['uid'],
+                            'pid' => $gridElement['pid'],
+                            'colPos' => $colPos,
+                            'backupColPos' => $gridElement['backupColPos'],
+                            'CType' => $gridIdentifier,
+                            'tx_gridelements_backend_layout' => $gridElement['tx_gridelements_backend_layout'],
+                            'tx_gridelements_container' => $gridElement['tx_gridelements_container'],
+                            'tx_gridelements_columns' => $gridElement['tx_gridelements_columns'],
+                            'tx_gridelements_children' => $gridElement['tx_gridelements_children'],
+                            'tx_container_parent' => $txContainerParent,
+                            'l18n_parent' => $gridElement['l18n_parent'],
+                            'sys_language_uid' => $gridElement['sys_language_uid'],
+                        ];
+
+                        $this->logger->info('Update Grids Elements ' . $this->table . ' whare UID=' . $gridElement['uid'], $logData);
+                    }
+                }
+            }
+        }
+
         // update zawartosci grid elementów
         foreach ($contentElementResults as $gridIdentifier) {
             foreach ($gridIdentifier as $key => $contents) {
@@ -485,68 +548,6 @@ class MigrationRepository extends Repository
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        // update grid elementów
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
-        foreach ($elementsArray as $gridIdentifier => $gridsElements) {
-            foreach ($gridsElements as $dataType => $elements) {
-                if ($dataType === 'contentelements') {
-                    foreach ($gridsElements[$dataType] as $gridElement) {
-
-                        if ((int)$gridElement['colPos'] === 0) {
-                            $colPos = 0;
-                        } else if (isset($gridElement['tx_gridelements_columns']) && (string)$gridElement['tx_gridelements_columns'] !== '') {
-                            $colPos = (int)$elementsArray[$gridIdentifier]['columns'][(int)$gridElement['tx_gridelements_columns']]['columnid'];
-                        } else {
-                            $colPos = 0;
-                        }
-
-                        if ((int)$gridElement['sys_language_uid'] > 0 && $colPos === 0) {
-                            $txContainerParent = 0;
-                        } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
-                            $txContainerParent = (int)$contentElementResults['parents'][$gridElement['l18n_parent']];
-                        } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l10n_parent']) && (int)$gridElement['l10n_parent'] > 0) {
-                            $txContainerParent = (int)$contentElementResults['parents'][$gridElement['l10n_parent']];
-                        } else {
-                            $txContainerParent = (int)$gridElement['tx_gridelements_container'];
-                        }
-
-                        $connection->update(
-                            $this->table,
-                            [
-                                //'colPos' => $colPos,
-                                'CType' => $gridIdentifier,
-                                //'tx_container_parent' => $txContainerParent,
-                                'pi_flexform' => $element['pi_flexform'],
-                                //'tx_gridelements_backend_layout' => ''
-                            ],
-                            [
-                                'uid' => $gridElement['uid']
-                            ]
-                        );
-
-                        $logData = [
-                            'uid' => $gridElement['uid'],
-                            'pid' => $gridElement['pid'],
-                            'colPos' => $colPos,
-                            'backupColPos' => $gridElement['backupColPos'],
-                            'CType' => $gridIdentifier,
-                            'tx_gridelements_backend_layout' => $gridElement['tx_gridelements_backend_layout'],
-                            'tx_gridelements_container' => $gridElement['tx_gridelements_container'],
-                            'tx_gridelements_columns' => $gridElement['tx_gridelements_columns'],
-                            'tx_gridelements_children' => $gridElement['tx_gridelements_children'],
-                            'tx_container_parent' => $txContainerParent,
-                            'l18n_parent' => $gridElement['l18n_parent'],
-                            'sys_language_uid' => $gridElement['sys_language_uid'],
-                        ];
-
-                        $this->logger->info('Update Grids Elements ' . $this->table . ' whare UID=' . $gridElement['uid'], $logData);
                     }
                 }
             }
