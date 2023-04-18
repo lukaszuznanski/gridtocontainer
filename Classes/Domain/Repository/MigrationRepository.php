@@ -481,7 +481,7 @@ class MigrationRepository extends Repository
                                         'sys_language_uid' => $element['sys_language_uid'],
                                     ];
 
-                                    $this->logger->info('Update ' . $this->table . ' whare UID=' . $element['uid'], $logData);
+                                    $this->logger->info('Update Grids Contents ' . $this->table . ' whare UID=' . $element['uid'], $logData);
                                 }
                             }
                         }
@@ -546,7 +546,7 @@ class MigrationRepository extends Repository
                             'sys_language_uid' => $gridElement['sys_language_uid'],
                         ];
 
-                        $this->logger->info('Update ' . $this->table . ' whare UID=' . $gridElement['uid'], $logData);
+                        $this->logger->info('Update Grids Elements ' . $this->table . ' whare UID=' . $gridElement['uid'], $logData);
                     }
                 }
             }
