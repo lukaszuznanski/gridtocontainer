@@ -500,12 +500,14 @@ class MigrationRepository extends Repository
                             $colPos = 0;
                         }
 
-                        if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
-                            //$txContainerParent = (int)$gridElement['l18n_parent'];
+                        if ((int)$gridElement['sys_language_uid'] > 0 && $colPos === 0) {
                             $txContainerParent = 0;
+                        } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
+                            $txContainerParent = (int)$gridElement['l18n_parent'];
+                            //$txContainerParent = 0;
                         } else if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l10n_parent']) && (int)$gridElement['l10n_parent'] > 0) {
-                            //$txContainerParent = (int)$gridElement['l10n_parent'];
-                            $txContainerParent = 0;
+                            $txContainerParent = (int)$gridElement['l10n_parent'];
+                            //$txContainerParent = 0;
                         } else {
                             $txContainerParent = (int)$gridElement['tx_gridelements_container'];
                         }
