@@ -293,7 +293,7 @@ class MigrationRepository extends Repository
                         'sys_language_uid' => $_contentElement['sys_language_uid'],
                     ];
 
-                    //$this->logger->info('Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$grididentifier, $logData);
+                    $this->logger->info('Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$grididentifier, $logData);
                 }
 
             } else {
@@ -504,6 +504,20 @@ class MigrationRepository extends Repository
                         } else {
                             $txContainerParent = (int)$gridElement['tx_gridelements_container'];
                         }
+
+                        $connection->update(
+                            $this->table,
+                            [
+                                'colPos' => $colPos,
+                                'CType' => $gridIdentifier,
+                                'tx_container_parent' => $txContainerParent,
+                                'pi_flexform' => $element['pi_flexform'],
+                                //'tx_gridelements_backend_layout' => ''
+                            ],
+                            [
+                                'uid' => $gridElement['uid']
+                            ]
+                        );
 
                         $logData = [
                             'uid' => $gridElement['uid'],
