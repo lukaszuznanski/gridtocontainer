@@ -299,6 +299,7 @@ class MigrationRepository extends Repository
             }
         }
 
+        // get content from gridelement container
         $contentElementResults = [];
         foreach ($elementsArray as $grididentifier => $results) {
             foreach ($results as $key2 => $elements) {
@@ -363,6 +364,49 @@ class MigrationRepository extends Repository
             }
         }
 
+        /*
+         * Struktura danych tabeli tt_content
+         *
+         * colPos
+         * przechowuje ID columny w której jest osadzony rekord
+         * gridelement ustawia -1 jeżeli:
+         * gridelement ustawia -2 jeżeli:
+         * jeżeli rekort jest osadzony w b13/container
+         * colPos = id kolumny z konfiguracji np. 200, 201, 202, 203
+         *
+         * tx_gridelements_container
+         * pole gridelements, przechowuje ID columny parent konfiguracji np. 0, 1, 2, 3
+         * domyślna migracja: tx_gridelements_container * 100 => tx_container_parent
+         *
+         * tx_gridelements_columns
+         * pole pakietu gridelements, przechowuje ID columny z konfiguracji np. 0, 1, 2, 3
+         * domyślna migracja: tx_gridelements_columns * 100 => colPos
+         *
+         * tx_gridelements_children (nie używane w czasie migracji)
+         * pole pakietu gridelements, przechowuje id columny children
+         *
+         * tx_gridelements_backend_layout (używane w czasie migracji elementów grid, nie używane w czasie migracji contentu)
+         * pole b13/container, przechowuje konfigurację nazwy pole np. 1-1, 1-2_1-2, 1-3_1-3_1-3
+         *
+         * tx_container_parent
+         * pole pakietu b13/container - przechowuje ID columny parent z konfiguracji pakietu
+         * domyślna migracja: tx_gridelements_container * 100 => tx_container_parent
+         *
+         * sys_language_uid
+         * pole z ID języka, jeżeli sys_language_uid > 0 to rekord jest tłumaczeniem
+         * jeżeli rekord jest tłumaczeniem parent id jest przechowane w polu l18n_parent / l10n_parent
+         *
+         * l18n_parent / l10n_parent
+         * służy do lokalizacji. Zawsze zawiera identyfikator rekordu w języku domyślnym
+         * (nawet jeśli rekord został przetłumaczony z rekordu w języku innym niż domyślny)
+         *
+         * l10n_source
+         * zawiera identyfikator ID rekordu używanego jako źródło tłumaczenia
+         * niezależnie od tego, czy rekord został przetłumaczony w trybie wolnym, czy połączonym
+         *
+         * t3_origuid - wypełniane podczas kopiowania lub tłumaczenia rekordu i zawiera identyfikator rekordu źródłowego
+         */
+
         foreach ($contentElementResults as $grididentifier) {
             foreach ($grididentifier as $key => $contents) {
                 if ($key === 'columns') {
@@ -370,6 +414,12 @@ class MigrationRepository extends Repository
                         foreach ($grididentifier['elements'] as $uidElements => $elements) {
                             foreach ($elements as $element) {
                                 if ((int)$element['tx_gridelements_columns'] === (int)$oldColumnId) {
+
+                                    // pozycja jest tłumaczeniem
+                                    // więc powinna mieć wartość 0 lub 200
+                                    //if ((int)$element['sys_language_uid'] > 0) {
+                                    //    $colPos = 0;
+                                    //}
 
                                     if ($newColumnId['sameCid'] === null) {
                                         if (empty($newColumnId['columnid'])) {
@@ -383,12 +433,12 @@ class MigrationRepository extends Repository
 
                                     if (isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
                                         $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
-                                        //$txContainerParent = (int)$uidElements;
-                                    } else if (isset($contentElementResults['parents'][$element['uid']]) && (int)$contentElementResults['parents'][$element['uid']] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['uid']];
+                                    } else if (isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
+                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l10n_parent']];
                                     } else {
                                         $txContainerParent = (int)$uidElements;
                                     }
+
                                     /** @var Connection $connection */
                                     $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
 
