@@ -415,18 +415,15 @@ class MigrationRepository extends Repository
                             foreach ($elements as $element) {
                                 if ((int)$element['tx_gridelements_columns'] === (int)$oldColumnId) {
 
-                                    // pozycja jest tłumaczeniem
-                                    // więc powinna mieć wartość 0 lub 200
-                                    //if ((int)$element['sys_language_uid'] > 0) {
-                                    //    $colPos = 0;
-                                    //}
-
                                     if ($newColumnId['sameCid'] === null) {
                                         if (empty($newColumnId['columnid'])) {
                                             $colPos = 0;
                                         }
                                         else if ((int)$element['colPos'] === 0) {
                                             // jeżeli colPos = 0, po migracji colPos = 0
+                                            $colPos = 0;
+                                        }
+                                        else if ((int)$oldColumnId === 0) {
                                             $colPos = 0;
                                         } else {
                                             $colPos = $newColumnId['columnid'];
@@ -435,6 +432,7 @@ class MigrationRepository extends Repository
                                         $colPos = $newColumnId['sameCid'];
                                     }
 
+                                    // pozycja jest tłumaczeniem
                                     if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
                                         $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
                                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
