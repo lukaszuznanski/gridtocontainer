@@ -413,10 +413,10 @@ class MigrationRepository extends Repository
         //$connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
 
 
-        foreach ($elementsArray as $dataType => $grididentifier) {
-            if ($dataType === 'contentelements') {
-                foreach ($grididentifier as $gridElements) {
-                    foreach ($gridElements as $gridElement) {
+        foreach ($elementsArray as $gridIdentifier => $gridsElements) {
+            foreach ($gridsElements as $dataType => $elements) {
+                if ($dataType === 'contentelements') {
+                    foreach ($gridsElements[$dataType] as $gridElement) {
 
                         if ((int)$gridElement['tx_gridelements_columns'] === 0) {
                             $colPos = 0;
@@ -453,7 +453,7 @@ class MigrationRepository extends Repository
                         $updateCols = [
                             'uid' => $gridElement['uid'],
                             'colPos' => $colPos,
-                            'CType' => $grididentifier['containername'],
+                            'CType' => $gridIdentifier['containername'],
                             'tx_container_parent' => $txContainerParent,
                             //'pi_flexform' => $element['pi_flexform'],
                             'tx_gridelements_backend_layout' => ''
