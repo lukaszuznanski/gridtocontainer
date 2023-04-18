@@ -637,7 +637,7 @@ class MigrationRepository extends Repository
             $connection->update(
                 $this->table,
                 [
-                    'colPos' => $colPos,
+                    'colPos' => 0,
                     //'CType' => $gridIdentifier,
                     //'tx_container_parent' => $txContainerParent,
                     //'tx_gridelements_backend_layout' => ''
