@@ -288,6 +288,7 @@ class MigrationRepository extends Repository
                         'tx_gridelements_container' => $_contentElement['tx_gridelements_container'],
                         'tx_gridelements_columns' => $_contentElement['tx_gridelements_columns'],
                         'tx_gridelements_children' => $_contentElement['tx_gridelements_children'],
+                        'tx_container_parent' => $_contentElement['tx_container_parent'],
                         'l18n_parent' => $_contentElement['l18n_parent'],
                         'sys_language_uid' => $_contentElement['sys_language_uid'],
                     ];
@@ -352,6 +353,7 @@ class MigrationRepository extends Repository
                                 'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
                                 'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
                                 'tx_gridelements_children' => $contentElement['tx_gridelements_children'],
+                                'tx_container_parent' => $contentElement['tx_container_parent'],
                                 'l18n_parent' => $contentElement['l18n_parent'],
                                 'sys_language_uid' => $contentElement['sys_language_uid'],
                             ];
@@ -418,7 +420,7 @@ class MigrationRepository extends Repository
                 if ($dataType === 'contentelements') {
                     foreach ($gridsElements[$dataType] as $gridElement) {
 
-                        if ((int)$gridElement['tx_gridelements_columns'] === 0) {
+                        if ((int)$gridElement['colPos'] === 0) {
                             $colPos = 0;
                         } else if (isset($gridElement['tx_gridelements_columns']) && (string)$gridElement['tx_gridelements_columns'] !== '') {
                             $colPos = (int)$elementsArray[$gridIdentifier]['columns'][(int)$gridElement['tx_gridelements_columns']]['columnid'];
@@ -453,13 +455,14 @@ class MigrationRepository extends Repository
                         $logData = [
                             'uid' => $gridElement['uid'],
                             'pid' => $gridElement['pid'],
-                            'colPos' => $gridElement['colPos'],
+                            'colPos' => $colPos,
                             'backupColPos' => $gridElement['backupColPos'],
-                            'CType' => $gridElement['CType'],
+                            'CType' => $gridElement['containername'],
                             'tx_gridelements_backend_layout' => $gridElement['tx_gridelements_backend_layout'],
                             'tx_gridelements_container' => $gridElement['tx_gridelements_container'],
                             'tx_gridelements_columns' => $gridElement['tx_gridelements_columns'],
                             'tx_gridelements_children' => $gridElement['tx_gridelements_children'],
+                            'tx_container_parent' => $txContainerParent,
                             'l18n_parent' => $gridElement['l18n_parent'],
                             'sys_language_uid' => $gridElement['sys_language_uid'],
                         ];
