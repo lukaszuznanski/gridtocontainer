@@ -603,6 +603,7 @@ class MigrationRepository extends Repository
                 'tx_gridelements_backend_layout',
                 'tx_gridelements_children',
                 'l18n_parent',
+                'sys_language_uid',
                 'hidden',
                 'deleted',
                 'header',
@@ -659,13 +660,28 @@ class MigrationRepository extends Repository
                     } else {
                         $colPos = 0;
                     }
-/*
+
                     if ((int)$element['sys_language_uid'] > 0 && $colPos === 0) {
                         $txContainerParent = 0;
                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                        $txContainerParent = (int)$parents[$element['l18n_parent']];
-                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                        $txContainerParent = (int)$parents[$element['l10n_parent']];
+                        $parent = $queryBuilder
+                            ->select(
+                                'tx_gridelements_container',
+                            )
+                            ->from($this->table)
+                            ->where(
+                                $queryBuilder->expr()->eq('uid',
+                                    $queryBuilder->createNamedParameter($element['l18n_parent'])
+                                )
+                            )
+                            ->execute()
+                            ->fetchFirstColumn();
+
+                        if (isset($parent[0])) {
+                            $txContainerParent = (int)$parent[0]['tx_gridelements_container'];
+                        } else {
+                            $txContainerParent = 0;
+                        }
                     } else if ($colPos === 0) {
                         $txContainerParent = (int)$element['tx_gridelements_container'];
                     } else {
@@ -676,14 +692,13 @@ class MigrationRepository extends Repository
                     if ($txContainerParent === 0 && $colPos > 0) {
                         continue;
                     }
-*/
 
                     /** @var Connection $connection */
                     $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
 
                     $updateCols = [
                         'colPos' => $colPos,
-                        //'tx_container_parent' => $txContainerParent,
+                        'tx_container_parent' => $txContainerParent,
                         //'tx_gridelements_container' => 0,
                         //'tx_gridelements_columns' => 0
                     ];
