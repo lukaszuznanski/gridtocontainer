@@ -440,8 +440,6 @@ class MigrationRepository extends Repository
                                         $txContainerParent = 0;
                                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
                                         $txContainerParent = (int)$contentElementResults['parents'][$element['l18n_parent']];
-                                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
-                                        $txContainerParent = (int)$contentElementResults['parents'][$element['l10n_parent']];
                                     } else if ($colPos === 0) {
                                         $txContainerParent = (int)$element['tx_gridelements_container'];
                                     } else {
@@ -649,13 +647,9 @@ class MigrationRepository extends Repository
         ];
 
         foreach ($colPosMigrationConfig as $oldColPosId => $newColPosId) {
-            foreach ($elements as $elementUid => $element) {
+            foreach ($elements as $element) {
                 if ($element['tx_gridelements_columns'] === $oldColPosId) {
-                    if ((int)$element['colPos'] === 0) {
-                        $colPos = 0;
-                    } else if (isset($element['tx_gridelements_columns'])
-                        && (string)$element['tx_gridelements_columns'] !== ''
-                        && (int)$element['tx_gridelements_columns'] === $oldColPosId) {
+                    if ((int)$element['tx_gridelements_columns'] === $oldColPosId) {
                         $colPos = $newColPosId;
                     } else {
                         $colPos = 0;
@@ -683,12 +677,13 @@ class MigrationRepository extends Repository
                             $txContainerParent = 0;
                         }
                     } else if ($colPos === 0) {
-                        $txContainerParent = (int)$element['tx_gridelements_container'];
+                        $txContainerParent = $element['tx_gridelements_container'];
+                    } else if ($element['tx_gridelements_container'] > 0) {
+                        $txContainerParent = $element['tx_gridelements_container'];
                     } else {
-                        $txContainerParent = (int)$elementUid;
+                        $txContainerParent = 0;
                     }
 
-                    // test wartości $txContainerParent
                     if ($txContainerParent === 0 && $colPos > 0) {
                         continue;
                     }
