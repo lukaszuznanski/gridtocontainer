@@ -33,197 +33,7 @@ class MigrationRepository extends Repository
     protected string $table = 'tt_content';
     use LoggerAwareTrait;
 
-    /**
-     *
-     * @return array|QueryResultInterface
-     * @throws DBALException
-     */
-    public function findGridelements(): QueryResultInterface
-    {
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $queryBuilder = $connection->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $queryBuilder
-            ->select('*')
-            ->from($this->table)
-            ->where(
-                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
-            )
-            ->execute()
-            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-    }
-
-    /**
-     *
-     * @return array
-     * @throws DBALException
-     */
-    public function findGridelementsCustom(): array
-    {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
-        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $queryBuilder
-            ->select('*')
-            ->from($this->table)
-            ->where(
-                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
-            )
-            ->execute()
-            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-    }
-
-    /**
-     * @param $id
-     * @return array
-     * @throws DBALException
-     */
-    public function findContentfromGridElements($id): array
-    {
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $queryBuilder = $connection->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $queryBuilder
-            ->select('*')
-            ->from($this->table)
-            ->where(
-                $queryBuilder->expr()->eq('tx_gridelements_container', $id)
-            )
-            ->execute()
-            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-    }
-
-    /**
-     * @param $id
-     * @return array
-     * @throws DBALException
-     */
-    public function findById($id): array
-    {
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $queryBuilder = $connection->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        return $queryBuilder
-            ->select('*')
-            ->from($this->table)
-            ->where(
-                $queryBuilder->expr()->eq('uid', $id)
-            )
-            ->execute(true)
-            ->fetchAll(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-    }
-
-    /**
-     * @param $data
-     * @return bool
-     */
-    public function updateGridElements($data): bool
-    {
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $queryBuilder = $connection->createQueryBuilder();
-
-        foreach ($data as $result) {
-            $connection->update(
-                $this->table,
-                [
-                    'CType' => $result['containername'],
-                    'pi_flexform' => empty($result['cleanFlexForm']) ? $result['flexFormvalue'] : '',
-                    'tx_gridelements_backend_layout' => ''
-                ],
-                [
-                    'uid' => $result['uid']
-                ]
-            );
-        }
-        return true;
-    }
-
-    /**
-     * @param $data
-     * @return bool
-     */
-    public function updateContentElements($data): bool
-    {
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $queryBuilder = $connection->createQueryBuilder();
-
-        foreach ($data as $result) {
-            if (empty($result['sameCid'])) {
-                if (empty($result['columnid'])) {
-                    $colPos = 0;
-                } else {
-                    $colPos = $result['columnid'];
-                }
-            } else {
-                $colPos = $result['sameCid'];
-            }
-            if (isset($result['l18nParent']) && (int)$result['l18nParent'] > 0) {
-                $txContainerParent = $result['l18nParent'];
-            } else {
-                $txContainerParent = $result['gridUid'];
-            }
-            $connection->update(
-                $this->table,
-                [
-                    'colPos' => $colPos,
-                    'tx_container_parent' => $txContainerParent,
-                    'tx_gridelements_container' => 0,
-                    'tx_gridelements_columns' => 0
-                ],
-                [
-                    'uid' => $result['uid']
-                ]
-            );
-        }
-        return true;
-    }
-
-    /**
-     * @param $gridElementsArray
-     * @return array
-     * @throws DBALException
-     */
-    public function findContent($gridElementsArray): array
-    {
-        $contentElements = [];
-        foreach ($gridElementsArray as $id) {
-            if (empty($id)) {
-                continue;
-            }
-
-            $contentElements[$id['uid']] = $this->findContentfromGridElements($id['uid']);
-        }
-        $contentElementsArray = [];
-        foreach ($contentElements as $id2 => $contentElement) {
-            if (empty($contentElement)) {
-                continue;
-            }
-
-            foreach ($contentElement as $cElement) {
-                $contentElementsArray[$id2][$cElement['tx_gridelements_columns']] = $contentElement;
-            }
-        }
-
-        return $contentElementsArray;
-    }
-
-    /**
-     * @param $elementsArray
-     * @return bool
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function updateAllElements($elementsArray): bool
+    public function initializeObject(): void
     {
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
             // configuration for ERROR level log entries
@@ -237,7 +47,16 @@ class MigrationRepository extends Repository
         ];
 
         $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
+    }
 
+    /**
+     * @param $elementsArray
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function updateAllElements($elementsArray): bool
+    {
         $this->logger->info('Start updateAllElements');
 
         /** @var ConnectionPool $connectionPool */
