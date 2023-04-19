@@ -726,6 +726,23 @@ class MigrationRepository extends Repository
             }
         }
 
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
+        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
+        $queryBuilder = $connectionPool->getQueryBuilderForTable('tt_content');
+        $queryBuilder
+            ->update('tt_content')
+            ->where(
+                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
+            )
+            ->orWhere(
+                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2))
+            )
+            ->set('colPos', 0)
+            ->executeStatement();
+
         $this->logger->info('End fixColPosErrors');
 
         return true;
