@@ -690,7 +690,7 @@ class MigrationRepository extends Repository
 
         // update zawartosci grid elementów
         foreach ($colPosMigrationConfig as $oldColPosId => $newColPosId) {
-            foreach ($includedContent as $elementKey => $element) {
+            foreach ($includedContent as $parenteEementUid => $element) {
                 if ($element['tx_gridelements_columns'] === $oldColPosId) {
                     if ((int)$element['colPos'] === 0) {
                         $colPos = 0;
@@ -711,7 +711,7 @@ class MigrationRepository extends Repository
                     } else if ($colPos === 0) {
                         $txContainerParent = (int)$element['tx_gridelements_container'];
                     } else {
-                        $txContainerParent = (int)$elementKey;
+                        $txContainerParent = (int)$parenteEementUid;
                     }
 
                     // test wartości $txContainerParent
