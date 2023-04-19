@@ -30,7 +30,6 @@ use Psr\Log\LoggerAwareTrait;
  */
 class MigrationRepository extends Repository
 {
-    protected QueryBuilder $queryBuilder;
     protected string $table = 'tt_content';
     use LoggerAwareTrait;
 
@@ -60,15 +59,10 @@ class MigrationRepository extends Repository
     {
         $this->logger->info('Start updateAllElements');
 
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $this->queryBuilder = $connection->createQueryBuilder();
-        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        // pobranie określonych grid elements (np. 1-1, 1-2_1-2 ...)
         foreach ($elementsArray as $grididentifier => $elements) {
             if ($elementsArray[$grididentifier]['active'] === 1) {
-                $elementsArray[$grididentifier]['contentelements'] = $this->queryBuilder
+                $queryBuilder = $this->getQueryBuilder();
+                $elementsArray[$grididentifier]['contentelements'] = $queryBuilder
                     ->select(
                         'uid',
                         'pid',
@@ -89,17 +83,13 @@ class MigrationRepository extends Repository
                     )
                     ->from($this->table)
                     ->where(
-                        //$queryBuilder->expr()->like('CType', '"%gridelements_pi%"'),
-                        //$queryBuilder->expr()->eq('tx_gridelements_backend_layout',
-                        //    $queryBuilder->createNamedParameter($grididentifier)
-                        //),
-                        $this->queryBuilder->expr()->like(
+                        $queryBuilder->expr()->like(
                             'CType',
-                            $this->queryBuilder->createNamedParameter('%' . $this->queryBuilder->escapeLikeWildcards('gridelements_pi') . '%')
+                            $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards('gridelements_pi') . '%')
                         ),
-                        $this->queryBuilder->expr()->like(
+                        $queryBuilder->expr()->like(
                             'tx_gridelements_backend_layout',
-                            $this->queryBuilder->createNamedParameter('%' . $this->queryBuilder->escapeLikeWildcards($grididentifier) . '%')
+                            $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($grididentifier) . '%')
                         )
                     )
                     ->execute()
@@ -129,19 +119,14 @@ class MigrationRepository extends Repository
             }
         }
 
-        // pobranie osadzonych elementów w pobranych gri elements
         $contentElementResults = [];
         foreach ($elementsArray as $grididentifier => $results) {
             foreach ($results as $key2 => $elements) {
                 if ($key2 === 'contentelements') {
                     foreach ($results[$key2] as $element) {
 
-                        /** @var Connection $connection */
-                        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-                        $this->queryBuilder = $connection->createQueryBuilder();
-                        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-                        $contentElements = $this->queryBuilder
+                        $queryBuilder = $this->getQueryBuilder();
+                        $contentElements = $queryBuilder
                             ->select(
                                 'uid',
                                 'pid',
@@ -162,10 +147,10 @@ class MigrationRepository extends Repository
                             )
                             ->from($this->table)
                             ->where(
-                                $this->queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
+                                $queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
                             )
                             ->orWhere(
-                                $this->queryBuilder->expr()->eq('l18n_parent', $element['uid'])
+                                $queryBuilder->expr()->eq('l18n_parent', $element['uid'])
                             )
                             ->execute()
                             ->fetchAllAssociative();
@@ -272,26 +257,22 @@ class MigrationRepository extends Repository
                                         continue;
                                     }
 
-                                    /** @var Connection $connection */
-                                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-                                    $this->queryBuilder = $connection->createQueryBuilder();
-                                    $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-                                    $this->queryBuilder->update($this->table)
+                                    $queryBuilder = $this->getQueryBuilder();
+                                    $queryBuilder->update($this->table)
                                         ->where(
-                                            $this->queryBuilder->expr()->eq(
+                                            $queryBuilder->expr()->eq(
                                                 'uid',
-                                                $this->queryBuilder->createNamedParameter($element['uid'])
+                                                $queryBuilder->createNamedParameter($element['uid'])
                                             )
                                         )
                                         ->set('colPos', $colPos)
                                         ->execute();
 
-                                    $this->queryBuilder->update($this->table)
+                                    $queryBuilder->update($this->table)
                                         ->where(
-                                            $this->queryBuilder->expr()->eq(
+                                            $queryBuilder->expr()->eq(
                                                 'uid',
-                                                $this->queryBuilder->createNamedParameter($element['uid'])
+                                                $queryBuilder->createNamedParameter($element['uid'])
                                             )
                                         )
                                         ->set('tx_container_parent', $txContainerParent)
@@ -344,26 +325,22 @@ class MigrationRepository extends Repository
                             $txContainerParent = (int)$gridElement['tx_gridelements_container'];
                         }
 
-                        /** @var Connection $connection */
-                        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-                        $this->queryBuilder = $connection->createQueryBuilder();
-                        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-                        $this->queryBuilder->update($this->table)
+                        $queryBuilder = $this->getQueryBuilder();
+                        $queryBuilder->update($this->table)
                             ->where(
-                                $this->queryBuilder->expr()->eq(
+                                $queryBuilder->expr()->eq(
                                     'uid',
-                                    $this->queryBuilder->createNamedParameter($gridElement['uid'])
+                                    $queryBuilder->createNamedParameter($gridElement['uid'])
                                 )
                             )
                             ->set('CType', $gridIdentifier)
                             ->execute();
 
-                        $this->queryBuilder->update($this->table)
+                        $queryBuilder->update($this->table)
                             ->where(
-                                $this->queryBuilder->expr()->eq(
+                                $queryBuilder->expr()->eq(
                                     'uid',
-                                    $this->queryBuilder->createNamedParameter($gridElement['uid'])
+                                    $queryBuilder->createNamedParameter($gridElement['uid'])
                                 )
                             )
                             ->set('pi_flexform', $element['pi_flexform'])
@@ -648,5 +625,15 @@ class MigrationRepository extends Repository
         $this->logger->info('End logColPosErrors');
 
         return true;
+    }
+
+    protected function getQueryBuilder()
+    {
+        return $this->getConnectionPool()->getQueryBuilderForTable($this->table);
+    }
+
+    protected function getConnectionPool(): ConnectionPool
+    {
+        return GeneralUtility::makeInstance(ConnectionPool::class);
     }
 }
