@@ -48,9 +48,11 @@ class MigrationRepository extends Repository
         ];
 
         $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
-        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
+
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+        $this->queryBuilder = $connection->createQueryBuilder();
         $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        //$connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
     }
 
     /**
