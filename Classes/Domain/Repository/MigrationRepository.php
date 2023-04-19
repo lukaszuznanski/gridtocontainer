@@ -392,6 +392,7 @@ class MigrationRepository extends Repository
             );
         }
 
+        /*
         $colPosMigrationConfig = [
             0 => 200,
             1 => 201,
@@ -467,6 +468,7 @@ class MigrationRepository extends Repository
                 }
             }
         }
+        */
 
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->delete($this->table)
