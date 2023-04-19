@@ -731,7 +731,6 @@ class MigrationRepository extends Repository
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
-        $queryBuilder = $connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder
             ->update('tt_content')
             ->where(
