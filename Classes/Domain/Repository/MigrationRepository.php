@@ -708,7 +708,7 @@ class MigrationRepository extends Repository
         ];
 
         foreach ($colPosMigrationConfig as $oldColPosId => $newColPosId) {
-            foreach ($includedContents as $includedContentUid => $includedContent) {
+            foreach ($elements as $includedContentUid => $includedContent) {
                 if ($includedContent['tx_gridelements_columns'] === $oldColPosId) {
                     if ((int)$includedContent['colPos'] === 0) {
                         $colPos = 0;
