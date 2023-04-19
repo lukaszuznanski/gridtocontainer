@@ -48,11 +48,6 @@ class MigrationRepository extends Repository
         ];
 
         $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
-
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-        $this->queryBuilder = $connection->createQueryBuilder();
-        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
     }
 
     /**
@@ -64,6 +59,11 @@ class MigrationRepository extends Repository
     public function updateAllElements($elementsArray): bool
     {
         $this->logger->info('Start updateAllElements');
+
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+        $this->queryBuilder = $connection->createQueryBuilder();
+        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         // pobranie określonych grid elements (np. 1-1, 1-2_1-2 ...)
         foreach ($elementsArray as $grididentifier => $elements) {
@@ -135,6 +135,12 @@ class MigrationRepository extends Repository
             foreach ($results as $key2 => $elements) {
                 if ($key2 === 'contentelements') {
                     foreach ($results[$key2] as $element) {
+
+                        /** @var Connection $connection */
+                        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+                        $this->queryBuilder = $connection->createQueryBuilder();
+                        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
                         $contentElements = $this->queryBuilder
                             ->select(
                                 'uid',
@@ -266,6 +272,11 @@ class MigrationRepository extends Repository
                                         continue;
                                     }
 
+                                    /** @var Connection $connection */
+                                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+                                    $this->queryBuilder = $connection->createQueryBuilder();
+                                    $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
                                     $this->queryBuilder->update($this->table)
                                         ->where(
                                             $this->queryBuilder->expr()->eq(
@@ -332,6 +343,11 @@ class MigrationRepository extends Repository
                         } else {
                             $txContainerParent = (int)$gridElement['tx_gridelements_container'];
                         }
+
+                        /** @var Connection $connection */
+                        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+                        $this->queryBuilder = $connection->createQueryBuilder();
+                        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
                         $this->queryBuilder->update($this->table)
                             ->where(
