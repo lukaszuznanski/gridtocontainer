@@ -119,7 +119,8 @@ class MigrationRepository extends Repository implements \Psr\Log\LoggerAwareInte
                 unset($elementsArray[$grididentifier]);
             }
         }
-
+        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
+        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         $contentElementResults = [];
         foreach ($elementsArray as $grididentifier => $results) {
             foreach ($results as $key2 => $elements) {
@@ -252,12 +253,14 @@ class MigrationRepository extends Repository implements \Psr\Log\LoggerAwareInte
                                     if ($txContainerParent === 0 && $colPos > 0) {
                                         continue;
                                     }
-
+                                    $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
+                                    $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
                                     $this->queryBuilder->update($this->table)
                                         ->where($this->queryBuilder->expr()->eq('uid', $this->queryBuilder->createNamedParameter($element['uid'])))
                                         ->set('colPos', $colPos)
                                         ->execute();
-
+                                    $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
+                                    $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
                                     $this->queryBuilder->update($this->table)
                                         ->where($this->queryBuilder->expr()->eq('uid', $this->queryBuilder->createNamedParameter($element['uid'])))
                                         ->set('tx_container_parent', $txContainerParent)
@@ -309,12 +312,14 @@ class MigrationRepository extends Repository implements \Psr\Log\LoggerAwareInte
                         } else {
                             $txContainerParent = (int)$gridElement['tx_gridelements_container'];
                         }
-
+                        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
+                        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
                         $this->queryBuilder->update($this->table)
                             ->where($this->queryBuilder->expr()->eq('uid', $this->queryBuilder->createNamedParameter($gridElement['uid'])))
                             ->set('CType', $gridIdentifier)
                             ->execute();
-
+                        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
+                        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
                         $this->queryBuilder->update($this->table)
                             ->where($this->queryBuilder->expr()->eq('uid', $this->queryBuilder->createNamedParameter($gridElement['uid'])))
                             ->set('pi_flexform', $element['pi_flexform'])
