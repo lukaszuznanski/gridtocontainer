@@ -621,6 +621,25 @@ class MigrationRepository extends Repository
             ->execute()
             ->fetchAllAssociative();
 
+        foreach ($elements as $element) {
+            $logData = [
+                'uid' => $element['uid'],
+                'pid' => $element['pid'],
+                'colPos' => $element['colPos'],
+                'backupColPos' => $element['backupColPos'],
+                'CType' => $element['CType'],
+                'tx_gridelements_backend_layout' => $element['tx_gridelements_backend_layout'],
+                'tx_gridelements_container' => $element['tx_gridelements_container'],
+                'tx_gridelements_columns' => $element['tx_gridelements_columns'],
+                'tx_gridelements_children' => $element['tx_gridelements_children'],
+                'tx_container_parent' => $element['tx_container_parent'],
+                'l18n_parent' => $element['l18n_parent'],
+                'sys_language_uid' => $element['sys_language_uid'],
+            ];
+
+            $this->logger->info('Fix ColPos - Select where colPos < 0', $logData);
+        }
+
         // pobranie osadzonych elementów w pobranych gri elements
         $parents = [];
         $includedContent= [];
