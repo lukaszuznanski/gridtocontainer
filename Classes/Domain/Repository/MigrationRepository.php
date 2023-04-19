@@ -26,7 +26,7 @@ class MigrationRepository extends Repository implements \Psr\Log\LoggerAwareInte
      */
     public function initializeObject(): void
     {
-        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
+        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
         $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
