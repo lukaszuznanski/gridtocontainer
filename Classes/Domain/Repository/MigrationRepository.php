@@ -730,7 +730,6 @@ class MigrationRepository extends Repository
         $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
         $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
         $queryBuilder
             ->update('tt_content')
             ->where(
@@ -740,7 +739,7 @@ class MigrationRepository extends Repository
                 $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2))
             )
             ->set('colPos', 0)
-            ->executeStatement();
+            ->execute();
 
         $this->logger->info('End fixColPosErrors');
 
