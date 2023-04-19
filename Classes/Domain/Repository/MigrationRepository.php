@@ -379,27 +379,9 @@ class MigrationRepository extends Repository
      */
     public function fixColPosErrors(): bool
     {
-        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
-            // configuration for ERROR level log entries
-            \TYPO3\CMS\Core\Log\LogLevel::INFO => [
-                // add a FileWriter
-                \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
-                    // configuration for the writer
-                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/migrate-grid-to-container.typo3-package-errors.log'
-                ]
-            ]
-        ];
-
-        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
-
         $this->logger->info('Start fixColPosErrors');
 
-        // select elements
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
-        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
+        $queryBuilder = $this->getQueryBuilder();
         $elements = $queryBuilder
             ->select(
                 'uid',
@@ -470,6 +452,7 @@ class MigrationRepository extends Repository
                     if ((int)$element['sys_language_uid'] > 0 && $colPos === 0) {
                         $txContainerParent = 0;
                     } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                        $queryBuilder = $this->getQueryBuilder();
                         $parent = $queryBuilder
                             ->select(
                                 'tx_gridelements_container',
@@ -500,9 +483,6 @@ class MigrationRepository extends Repository
                         continue;
                     }
 
-                    /** @var Connection $connection */
-                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
                     $updateCols = [
                         'colPos' => $colPos,
                         'tx_container_parent' => $txContainerParent,
@@ -510,13 +490,26 @@ class MigrationRepository extends Repository
                         //'tx_gridelements_columns' => 0
                     ];
 
-                    $connection->update(
-                        $this->table,
-                        $updateCols,
-                        [
-                            'uid' => $element['uid']
-                        ]
-                    );
+                    $queryBuilder = $this->getQueryBuilder();
+                    $queryBuilder->update($this->table)
+                        ->where(
+                            $queryBuilder->expr()->eq(
+                                'uid',
+                                $queryBuilder->createNamedParameter($element['uid'])
+                            )
+                        )
+                        ->set('colPos', $colPos)
+                        ->execute();
+
+                    $queryBuilder->update($this->table)
+                        ->where(
+                            $queryBuilder->expr()->eq(
+                                'uid',
+                                $queryBuilder->createNamedParameter($element['uid'])
+                            )
+                        )
+                        ->set('tx_container_parent', $txContainerParent)
+                        ->execute();
 
                     $logData = [
                         'uid' => $element['uid'],
@@ -538,21 +531,11 @@ class MigrationRepository extends Repository
             }
         }
 
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
-        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-
-        $queryBuilder
-            ->update('tt_content')
-            ->where(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
-            )
-            ->orWhere(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2))
-            )
-            ->set('colPos', 0)
-            ->executeStatement();
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->delete($this->table)
+            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
+            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->execute();
 
         $this->logger->info('End fixColPosErrors');
 
