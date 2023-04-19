@@ -48,7 +48,18 @@ class MigrationRepository extends Repository implements \Psr\Log\LoggerAwareInte
      */
     public function updateAllElements($elementsArray): bool
     {
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
+            \TYPO3\CMS\Core\Log\LogLevel::INFO => [
+                \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/migrate-grid-to-container.typo3-package.log'
+                ]
+            ]
+        ];
+
+        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
         $this->logger->info('Start updateAllElements');
+        $this->queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('pages')->createQueryBuilder();
+        $this->queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         foreach ($elementsArray as $grididentifier => $elements) {
             if ($elementsArray[$grididentifier]['active'] === 1) {
