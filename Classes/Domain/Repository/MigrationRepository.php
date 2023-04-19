@@ -567,6 +567,209 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
+    public function fixColPosErrors(): bool
+    {
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
+            // configuration for ERROR level log entries
+            \TYPO3\CMS\Core\Log\LogLevel::INFO => [
+                // add a FileWriter
+                \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                    // configuration for the writer
+                    'logFile' => \TYPO3\CMS\Core\Core\Environment::getVarPath() . '/log/migrate-grid-to-container.typo3-package-errors.log'
+                ]
+            ]
+        ];
+
+        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
+
+        $this->logger->info('Start fixColPosErrors');
+
+        // select elements
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\ConnectionPool');
+        $queryBuilder = $connectionPool->getConnectionForTable($this->table)->createQueryBuilder();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+
+        $elements = $queryBuilder
+            ->select(
+                'uid',
+                'pid',
+                'colPos',
+                'backupColPos',
+                'CType',
+                'tx_container_parent',
+                'tx_gridelements_columns',
+                'tx_gridelements_container',
+                'tx_gridelements_backend_layout',
+                'tx_gridelements_children',
+                'l18n_parent',
+                'hidden',
+                'deleted',
+                'header',
+            )
+            ->from($this->table)
+            ->where(
+                $queryBuilder->expr()->eq('colPos',
+                    $queryBuilder->createNamedParameter(-1)
+                )
+            )
+            ->orWhere(
+                $queryBuilder->expr()->eq('colPos',
+                    $queryBuilder->createNamedParameter(-2)
+                )
+            )
+            ->execute()
+            ->fetchAllAssociative();
+
+        // pobranie osadzonych elementów w pobranych gri elements
+        $parents = [];
+        $includedContent= [];
+        foreach ($elements as $element) {
+            /** @var Connection $connection */
+            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+            $queryBuilder = $connection->createQueryBuilder();
+            $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+            $contentElements = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'backupColPos',
+                    'CType',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_container',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_children',
+                    'tx_container_parent',
+                    'l18n_parent',
+                    'hidden',
+                    'deleted',
+                    'header',
+                    'pi_flexform',
+                    'sys_language_uid ',
+                )
+                ->from($this->table)
+                ->where(
+                    $queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
+                )
+                ->orWhere(
+                    $queryBuilder->expr()->eq('l18n_parent', $element['uid'])
+                )
+                ->execute()
+                ->fetchAllAssociative();
+
+            foreach ($contentElements as $contentElement) {
+                $parents[$contentElement['uid']] = $contentElement['tx_gridelements_container'];
+
+                $logData = [
+                    'uid' => $contentElement['uid'],
+                    'pid' => $contentElement['pid'],
+                    'colPos' => $contentElement['colPos'],
+                    'backupColPos' => $contentElement['backupColPos'],
+                    'CType' => $contentElement['CType'],
+                    'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
+                    'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
+                    'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
+                    'tx_gridelements_children' => $contentElement['tx_gridelements_children'],
+                    'tx_container_parent' => $contentElement['tx_container_parent'],
+                    'l18n_parent' => $contentElement['l18n_parent'],
+                    'sys_language_uid' => $contentElement['sys_language_uid'],
+                ];
+
+                $this->logger->info('Fix ColPos - Select where tx_gridelements_container='.$element['uid'], $logData);
+            }
+            $includedContent[$element['uid']] = $contentElements;
+        }
+
+        $colPosMigrationConfig = [
+            0 => 200,
+            1 => 201,
+            2 => 202,
+            3 => 203,
+        ];
+
+        // update zawartosci grid elementów
+        foreach ($colPosMigrationConfig as $oldColPosId => $newColPosId) {
+            foreach ($includedContent as $elementKey => $element) {
+                if ($element['tx_gridelements_columns'] === $oldColPosId) {
+                    if ((int)$element['colPos'] === 0) {
+                        $colPos = 0;
+                    } else if (isset($element['tx_gridelements_columns'])
+                        && (string)$element['tx_gridelements_columns'] !== ''
+                        && (int)$element['tx_gridelements_columns'] === $oldColPosId) {
+                        $colPos = $newColPosId;
+                    } else {
+                        $colPos = 0;
+                    }
+
+                    if ((int)$element['sys_language_uid'] > 0 && $colPos === 0) {
+                        $txContainerParent = 0;
+                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                        $txContainerParent = (int)$parents[$element['l18n_parent']];
+                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
+                        $txContainerParent = (int)$parents['parents'][$element['l10n_parent']];
+                    } else if ($colPos === 0) {
+                        $txContainerParent = (int)$element['tx_gridelements_container'];
+                    } else {
+                        $txContainerParent = (int)$elementKey;
+                    }
+
+                    // test wartości $txContainerParent
+                    if ($txContainerParent === 0 && $colPos > 0) {
+                        continue;
+                    }
+
+                    /** @var Connection $connection */
+                    $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+                    $updateCols = [
+                        'colPos' => $colPos,
+                        'tx_container_parent' => $txContainerParent,
+                        //'tx_gridelements_container' => 0,
+                        //'tx_gridelements_columns' => 0
+                    ];
+
+                    $connection->update(
+                        $this->table,
+                        $updateCols,
+                        [
+                            'uid' => $element['uid']
+                        ]
+                    );
+
+                    $logData = [
+                        'uid' => $element['uid'],
+                        'pid' => $element['pid'],
+                        'colPos' => $colPos,
+                        'backupColPos' => $element['backupColPos'],
+                        'CType' => $element['CType'],
+                        'tx_gridelements_backend_layout' => $element['tx_gridelements_backend_layout'],
+                        'tx_gridelements_container' => $element['tx_gridelements_container'],
+                        'tx_gridelements_columns' => $element['tx_gridelements_columns'],
+                        'tx_gridelements_children' => $element['tx_gridelements_children'],
+                        'tx_container_parent' => $txContainerParent,
+                        'l18n_parent' => $element['l18n_parent'],
+                        'sys_language_uid' => $element['sys_language_uid'],
+                    ];
+
+                    $this->logger->info('Fix ColPos - Update Grids Contents ' . $this->table . ' whare UID=' . $element['uid'], $logData);
+                }
+            }
+        }
+
+        /** @var Connection $connection */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
+
+        $this->logger->info('End fixColPosErrors');
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
     public function logColPosErrors(): bool
     {
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = [
@@ -621,31 +824,8 @@ class MigrationRepository extends Repository
             ->execute()
             ->fetchAllAssociative();
 
-        /** @var Connection $connection */
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-
         foreach ($elements as $element) {
             $this->logger->info('Error data: ', $element);
-
-            // próba fix error błędnych pozycji
-            if (isset($element['tx_gridelements_columns']) && (string)$element['tx_gridelements_columns'] !== '') {
-                $colPos = (int)$element['tx_gridelements_columns'];
-            } else {
-                $colPos = 0;
-            }
-
-            $connection->update(
-                $this->table,
-                [
-                    'colPos' => 0,
-                    //'CType' => $gridIdentifier,
-                    //'tx_container_parent' => $txContainerParent,
-                    //'tx_gridelements_backend_layout' => ''
-                ],
-                [
-                    'uid' => $element['uid']
-                ]
-            );
         }
 
         $this->logger->info('End logColPosErrors');
