@@ -640,66 +640,6 @@ class MigrationRepository extends Repository
             $this->logger->info('Fix ColPos - Select where colPos < 0', $logData);
         }
 
-        // pobranie osadzonych elementów w pobranych grid elements
-        $parents = [];
-        $includedContents = [];
-        foreach ($elements as $element) {
-            /** @var Connection $connection */
-            $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
-            $queryBuilder = $connection->createQueryBuilder();
-            $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $contentElements = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'backupColPos',
-                    'CType',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_container',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_children',
-                    'tx_container_parent',
-                    'l18n_parent',
-                    'hidden',
-                    'deleted',
-                    'header',
-                    'pi_flexform',
-                    'sys_language_uid ',
-                )
-                ->from($this->table)
-                ->where(
-                    $queryBuilder->expr()->eq('tx_gridelements_container', $element['uid'])
-                )
-                ->orWhere(
-                    $queryBuilder->expr()->eq('l18n_parent', $element['uid'])
-                )
-                ->execute()
-                ->fetchAllAssociative();
-
-            foreach ($contentElements as $contentElement) {
-                $parents[$contentElement['uid']] = $contentElement['tx_gridelements_container'];
-
-                $logData = [
-                    'uid' => $contentElement['uid'],
-                    'pid' => $contentElement['pid'],
-                    'colPos' => $contentElement['colPos'],
-                    'backupColPos' => $contentElement['backupColPos'],
-                    'CType' => $contentElement['CType'],
-                    'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
-                    'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
-                    'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
-                    'tx_gridelements_children' => $contentElement['tx_gridelements_children'],
-                    'tx_container_parent' => $contentElement['tx_container_parent'],
-                    'l18n_parent' => $contentElement['l18n_parent'],
-                    'sys_language_uid' => $contentElement['sys_language_uid'],
-                ];
-
-                $this->logger->info('Fix ColPos - Select where tx_gridelements_container='.$element['uid'], $logData);
-            }
-            $includedContents[$element['uid']] = $contentElements;
-        }
-
         $colPosMigrationConfig = [
             0 => 200,
             1 => 201,
@@ -708,41 +648,42 @@ class MigrationRepository extends Repository
         ];
 
         foreach ($colPosMigrationConfig as $oldColPosId => $newColPosId) {
-            foreach ($elements as $includedContentUid => $includedContent) {
-                if ($includedContent['tx_gridelements_columns'] === $oldColPosId) {
-                    if ((int)$includedContent['colPos'] === 0) {
+            foreach ($elements as $elementUid => $element) {
+                if ($element['tx_gridelements_columns'] === $oldColPosId) {
+                    if ((int)$element['colPos'] === 0) {
                         $colPos = 0;
-                    } else if (isset($includedContent['tx_gridelements_columns'])
-                        && (string)$includedContent['tx_gridelements_columns'] !== ''
-                        && (int)$includedContent['tx_gridelements_columns'] === $oldColPosId) {
+                    } else if (isset($element['tx_gridelements_columns'])
+                        && (string)$element['tx_gridelements_columns'] !== ''
+                        && (int)$element['tx_gridelements_columns'] === $oldColPosId) {
                         $colPos = $newColPosId;
                     } else {
                         $colPos = 0;
                     }
-
-                    if ((int)$includedContent['sys_language_uid'] > 0 && $colPos === 0) {
+/*
+                    if ((int)$element['sys_language_uid'] > 0 && $colPos === 0) {
                         $txContainerParent = 0;
-                    } else if ((int)$includedContent['sys_language_uid'] > 0 && isset($includedContent['l18n_parent']) && (int)$includedContent['l18n_parent'] > 0) {
-                        $txContainerParent = (int)$parents[$includedContent['l18n_parent']];
-                    } else if ((int)$includedContent['sys_language_uid'] > 0 && isset($includedContent['l10n_parent']) && (int)$includedContent['l10n_parent'] > 0) {
-                        $txContainerParent = (int)$parents[$includedContent['l10n_parent']];
+                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                        $txContainerParent = (int)$parents[$element['l18n_parent']];
+                    } else if ((int)$element['sys_language_uid'] > 0 && isset($element['l10n_parent']) && (int)$element['l10n_parent'] > 0) {
+                        $txContainerParent = (int)$parents[$element['l10n_parent']];
                     } else if ($colPos === 0) {
-                        $txContainerParent = (int)$includedContent['tx_gridelements_container'];
+                        $txContainerParent = (int)$element['tx_gridelements_container'];
                     } else {
-                        $txContainerParent = (int)$includedContentUid;
+                        $txContainerParent = (int)$elementUid;
                     }
 
                     // test wartości $txContainerParent
                     if ($txContainerParent === 0 && $colPos > 0) {
                         continue;
                     }
+*/
 
                     /** @var Connection $connection */
                     $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->table);
 
                     $updateCols = [
                         'colPos' => $colPos,
-                        'tx_container_parent' => $txContainerParent,
+                        //'tx_container_parent' => $txContainerParent,
                         //'tx_gridelements_container' => 0,
                         //'tx_gridelements_columns' => 0
                     ];
@@ -751,23 +692,23 @@ class MigrationRepository extends Repository
                         $this->table,
                         $updateCols,
                         [
-                            'uid' => $includedContent['uid']
+                            'uid' => $element['uid']
                         ]
                     );
 
                     $logData = [
-                        'uid' => $includedContent['uid'],
-                        'pid' => $includedContent['pid'],
+                        'uid' => $element['uid'],
+                        'pid' => $element['pid'],
                         'colPos' => $colPos,
-                        'backupColPos' => $includedContent['backupColPos'],
-                        'CType' => $includedContent['CType'],
-                        'tx_gridelements_backend_layout' => $includedContent['tx_gridelements_backend_layout'],
-                        'tx_gridelements_container' => $includedContent['tx_gridelements_container'],
-                        'tx_gridelements_columns' => $includedContent['tx_gridelements_columns'],
-                        'tx_gridelements_children' => $includedContent['tx_gridelements_children'],
-                        'tx_container_parent' => $txContainerParent,
-                        'l18n_parent' => $includedContent['l18n_parent'],
-                        'sys_language_uid' => $includedContent['sys_language_uid'],
+                        'backupColPos' => $element['backupColPos'],
+                        'CType' => $element['CType'],
+                        'tx_gridelements_backend_layout' => $element['tx_gridelements_backend_layout'],
+                        'tx_gridelements_container' => $element['tx_gridelements_container'],
+                        'tx_gridelements_columns' => $element['tx_gridelements_columns'],
+                        'tx_gridelements_children' => $element['tx_gridelements_children'],
+                        'tx_container_parent' => $element['tx_container_parent'],
+                        'l18n_parent' => $element['l18n_parent'],
+                        'sys_language_uid' => $element['sys_language_uid'],
                     ];
 
                     $this->logger->info('Fix ColPos - Update Grids Contents ' . $this->table . ' whare UID=' . $element['uid'], $logData);
