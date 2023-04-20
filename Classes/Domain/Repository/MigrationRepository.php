@@ -347,6 +347,9 @@ class MigrationRepository extends Repository
     {
         $this->logger->info('Start fixColPosErrors');
 
+        $this->logColPosErrors();
+
+        /*
         $queryBuilder = $this->getQueryBuilder();
         $elements = $queryBuilder
             ->select(
@@ -392,7 +395,6 @@ class MigrationRepository extends Repository
             );
         }
 
-        /*
         $colPosMigrationConfig = [
             0 => 200,
             1 => 201,
@@ -476,6 +478,8 @@ class MigrationRepository extends Repository
             ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
             ->execute();
 
+        $this->logColPosErrors();
+
         $this->logger->info('End fixColPosErrors');
 
         return true;
@@ -528,11 +532,6 @@ class MigrationRepository extends Repository
 
     protected function getQueryBuilder(): QueryBuilder
     {
-        return $this->getConnectionPool()->getQueryBuilderForTable($this->table);
-    }
-
-    protected function getConnectionPool(): ConnectionPool
-    {
-        return GeneralUtility::makeInstance(ConnectionPool::class);
+        return GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
     }
 }
