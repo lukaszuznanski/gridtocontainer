@@ -394,7 +394,7 @@ class MigrationRepository extends Repository
         }
 
         $children = [];
-        foreach ($elements as $elementKey => $element) {
+        foreach ($elements as $element) {
             $queryBuilder = $this->getQueryBuilder();
             $elementsChild = $queryBuilder
                 ->select(
@@ -420,18 +420,16 @@ class MigrationRepository extends Repository
                 ->execute()
                 ->fetchAllAssociative();
 
-            foreach ($elementsChild as $elementChild) {
-                $children[$elementKey][] = $elementChild['uid'];
-            }
+            $children[$element['uid']] = $elementsChild;
         }
 
-        foreach ($elements as $elementKey => $element) {
+        foreach ($elements as $element) {
             $queryBuilder = $this->getQueryBuilder();
             $queryBuilder->delete($this->table)
                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
                 ->execute();
 
-            foreach ($children[$elementKey] as $child) {
+            foreach ($children[$element['uid']] as $child) {
                 $queryBuilder = $this->getQueryBuilder();
                 $queryBuilder->delete($this->table)
                     ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
