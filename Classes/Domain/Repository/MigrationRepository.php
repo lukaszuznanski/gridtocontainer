@@ -347,7 +347,113 @@ class MigrationRepository extends Repository
     {
         $this->logger->info('Start fixColPosErrors');
         $this->logColPosErrors();
+        $this->removeColPosErrorsRows();
+        $this->logColPosErrors();
+        $this->removeAllColPosErrors();
+        $this->logColPosErrors();
+        $this->logger->info('End fixColPosErrors');
+        return true;
+    }
 
+    /**
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function removeColPosErrorsRows(): bool
+    {
+        $queryBuilder = $this->getQueryBuilder();
+        $elements = $queryBuilder
+            ->select(
+                'uid',
+                'pid',
+                'colPos',
+                'backupColPos',
+                'CType',
+                'tx_container_parent',
+                'tx_gridelements_columns',
+                'tx_gridelements_container',
+                'tx_gridelements_backend_layout',
+                'tx_gridelements_children',
+                'l18n_parent',
+                'sys_language_uid',
+                'hidden',
+                'deleted',
+                'header',
+            )
+            ->from($this->table)
+            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
+            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->execute()
+            ->fetchAllAssociative();
+
+        $children = [];
+        foreach ($elements as $element) {
+            $queryBuilder = $this->getQueryBuilder();
+            $elementsChild = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'backupColPos',
+                    'CType',
+                    'tx_container_parent',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_container',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_children',
+                    'l18n_parent',
+                    'sys_language_uid',
+                    'hidden',
+                    'deleted',
+                    'header',
+                )
+                ->from($this->table)
+                ->where($queryBuilder->expr()->eq('tx_gridelements_container', $queryBuilder->createNamedParameter($element['uid'])))
+                ->orWhere($queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($element['uid'])))
+                ->execute()
+                ->fetchAllAssociative();
+
+            $children[$element['uid']] = $elementsChild;
+        }
+
+        foreach ($elements as $element) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->delete($this->table)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
+                ->execute();
+
+            foreach ($children[$element['uid']] as $child) {
+                $queryBuilder = $this->getQueryBuilder();
+                $queryBuilder->delete($this->table)
+                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
+                    ->execute();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws DBALException
+     */
+    public function removeAllColPosErrors(): bool
+    {
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->delete($this->table)
+            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
+            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->execute();
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function updateColPosErrors(): bool
+    {
         $queryBuilder = $this->getQueryBuilder();
         $elements = $queryBuilder
             ->select(
@@ -393,53 +499,6 @@ class MigrationRepository extends Repository
             );
         }
 
-        $children = [];
-        foreach ($elements as $element) {
-            $queryBuilder = $this->getQueryBuilder();
-            $elementsChild = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'backupColPos',
-                    'CType',
-                    'tx_container_parent',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_container',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_children',
-                    'l18n_parent',
-                    'sys_language_uid',
-                    'hidden',
-                    'deleted',
-                    'header',
-                )
-                ->from($this->table)
-                ->where($queryBuilder->expr()->eq('tx_gridelements_container', $queryBuilder->createNamedParameter($element['uid'])))
-                ->orWhere($queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($element['uid'])))
-                ->execute()
-                ->fetchAllAssociative();
-
-            $children[$element['uid']] = $elementsChild;
-        }
-
-        foreach ($elements as $element) {
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->delete($this->table)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
-                ->execute();
-
-            foreach ($children[$element['uid']] as $child) {
-                $queryBuilder = $this->getQueryBuilder();
-                $queryBuilder->delete($this->table)
-                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
-                    ->execute();
-            }
-        }
-
-        $this->logColPosErrors();
-
-        /*
         $colPosMigrationConfig = [
             0 => 200,
             1 => 201,
@@ -515,18 +574,6 @@ class MigrationRepository extends Repository
                 }
             }
         }
-        */
-
-        $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder->delete($this->table)
-            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
-            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
-            ->execute();
-
-        $this->logColPosErrors();
-
-        $this->logger->info('End fixColPosErrors');
-
         return true;
     }
 
@@ -575,6 +622,9 @@ class MigrationRepository extends Repository
         return true;
     }
 
+    /**
+     * @return QueryBuilder
+     */
     protected function getQueryBuilder(): QueryBuilder
     {
         return GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
