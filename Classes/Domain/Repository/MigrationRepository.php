@@ -347,8 +347,8 @@ class MigrationRepository extends Repository
     {
         $this->logger->info('Start fixColPosErrors');
         $this->logColPosErrors();
-        $this->removeColPosErrorsRows();
-        $this->logColPosErrors();
+        //$this->removeColPosErrorsRows();
+        //$this->logColPosErrors();
         $this->removeAllColPosErrors();
         $this->logColPosErrors();
         $this->logger->info('End fixColPosErrors');
@@ -356,6 +356,7 @@ class MigrationRepository extends Repository
     }
 
     /**
+     * TODO This method must be checked
      * @return bool
      * @throws DBALException
      * @throws Exception
