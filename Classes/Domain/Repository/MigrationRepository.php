@@ -220,9 +220,7 @@ class MigrationRepository extends Repository
                                 if ($element['tx_gridelements_columns'] === $oldColumnId) {
                                     if ((int)$elements[$elementKey]['colPos'] === 0) {
                                         $colPos = 0;
-                                    } else if (isset($elements[$elementKey]['tx_gridelements_columns'])
-                                        && (string)$elements[$elementKey]['tx_gridelements_columns'] !== ''
-                                        && (int)$elements[$elementKey]['tx_gridelements_columns'] === $oldColumnId) {
+                                    } else if ((int)$elements[$elementKey]['tx_gridelements_columns'] === $oldColumnId) {
                                         $colPos = (int)$newColumnId['columnid'];
                                     } else {
                                         $colPos = 0;
@@ -437,14 +435,127 @@ class MigrationRepository extends Repository
     /**
      * @return bool
      * @throws DBALException
+     * @throws Exception
      */
     public function removeAllColPosErrors(): bool
     {
+        $this->logger->info('Start - removeAllColPosErrors');
+
+        $queryBuilder = $this->getQueryBuilder();
+        $elements = $queryBuilder
+            ->select(
+                'uid',
+                'pid',
+                'colPos',
+                'backupColPos',
+                'CType',
+                'tx_container_parent',
+                'tx_gridelements_columns',
+                'tx_gridelements_container',
+                'tx_gridelements_backend_layout',
+                'tx_gridelements_children',
+                'l18n_parent',
+                'sys_language_uid',
+                'hidden',
+                'deleted',
+                'header',
+            )
+            ->from($this->table)
+            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
+            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->execute()
+            ->fetchAllAssociative();
+
+        $children = [];
+        foreach ($elements as $element) {
+            if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                $fieldName = 'l18n_parent';
+            } else {
+                $fieldName = 'tx_gridelements_container';
+            }
+
+            $queryBuilder = $this->getQueryBuilder();
+            $children[$element['uid']] = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'backupColPos',
+                    'CType',
+                    'tx_container_parent',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_container',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_children',
+                    'l18n_parent',
+                    'sys_language_uid',
+                    'hidden',
+                    'deleted',
+                    'header',
+                )
+                ->from($this->table)
+                ->where($queryBuilder->expr()->eq($fieldName, $queryBuilder->createNamedParameter($element['uid'])))
+                ->execute()
+                ->fetchAllAssociative();
+        }
+
+        foreach ($elements as $element) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->delete($this->table)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
+                ->execute();
+
+            $this->logger->info(
+                'Remove All Col Pos Errors: ' . $this->table . ' whare UID=' . $element['uid'],
+                [
+                    'uid' => $element['uid'],
+                    'pid' => $element['pid'],
+                    'colPos' => $element['colPos'],
+                    'backupColPos' => $element['backupColPos'],
+                    'CType' => $element['CType'],
+                    'tx_gridelements_backend_layout' => $element['tx_gridelements_backend_layout'],
+                    'tx_gridelements_container' => $element['tx_gridelements_container'],
+                    'tx_gridelements_columns' => $element['tx_gridelements_columns'],
+                    'tx_gridelements_children' => $element['tx_gridelements_children'],
+                    'tx_container_parent' => $element['tx_container_parent'],
+                    'l18n_parent' => $element['l18n_parent'],
+                    'sys_language_uid' => $element['sys_language_uid']
+                ]
+            );
+
+            foreach ($children[$element['uid']] as $child) {
+                $queryBuilder = $this->getQueryBuilder();
+                $queryBuilder->delete($this->table)
+                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
+                    ->execute();
+
+                $this->logger->info(
+                    'Remove All Col Pos Errors: ' . $this->table . ' whare UID=' . $child['uid'],
+                    [
+                        'uid' => $child['uid'],
+                        'pid' => $child['pid'],
+                        'colPos' => $child['colPos'],
+                        'backupColPos' => $child['backupColPos'],
+                        'CType' => $child['CType'],
+                        'tx_gridelements_backend_layout' => $child['tx_gridelements_backend_layout'],
+                        'tx_gridelements_container' => $child['tx_gridelements_container'],
+                        'tx_gridelements_columns' => $child['tx_gridelements_columns'],
+                        'tx_gridelements_children' => $child['tx_gridelements_children'],
+                        'tx_container_parent' => $child['tx_container_parent'],
+                        'l18n_parent' => $child['l18n_parent'],
+                        'sys_language_uid' => $child['sys_language_uid']
+                    ]
+                );
+            }
+        }
+
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->delete($this->table)
             ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
             ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
             ->execute();
+
+        $this->logger->info('End - removeAllColPosErrors');
         return true;
     }
 
@@ -508,9 +619,11 @@ class MigrationRepository extends Repository
         ];
 
         foreach ($colPosMigrationConfig as $oldColPosId => $newColPosId) {
-            foreach ($elements as $element) {
+            foreach ($elements as $elementKey => $element) {
                 if ($element['tx_gridelements_columns'] === $oldColPosId) {
-                    if ((int)$element['tx_gridelements_columns'] === $oldColPosId) {
+                    if ((int)$elements[$elementKey]['colPos'] === 0) {
+                        $colPos = 0;
+                    } else if ((int)$elements[$elementKey]['tx_gridelements_columns'] === $oldColPosId) {
                         $colPos = $newColPosId;
                     } else {
                         $colPos = 0;
@@ -601,6 +714,7 @@ class MigrationRepository extends Repository
                 'tx_gridelements_backend_layout',
                 'tx_gridelements_children',
                 'l18n_parent',
+                'sys_language_uid',
                 'hidden',
                 'deleted',
                 'header',
