@@ -346,10 +346,8 @@ class MigrationRepository extends Repository
     public function fixColPosErrors(): bool
     {
         $this->logger->info('Start fixColPosErrors');
-
         $this->logColPosErrors();
 
-        /*
         $queryBuilder = $this->getQueryBuilder();
         $elements = $queryBuilder
             ->select(
@@ -395,6 +393,55 @@ class MigrationRepository extends Repository
             );
         }
 
+        $children = [];
+        foreach ($elements as $elementKey => $element) {
+            $queryBuilder = $this->getQueryBuilder();
+            $elementsChild = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'backupColPos',
+                    'CType',
+                    'tx_container_parent',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_container',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_children',
+                    'l18n_parent',
+                    'sys_language_uid',
+                    'hidden',
+                    'deleted',
+                    'header',
+                )
+                ->from($this->table)
+                ->where($queryBuilder->expr()->eq('tx_gridelements_container', $queryBuilder->createNamedParameter($element['uid'])))
+                ->orWhere($queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($element['uid'])))
+                ->execute()
+                ->fetchAllAssociative();
+
+            foreach ($elementsChild as $elementChild) {
+                $children[$elementKey][] = $elementChild['uid'];
+            }
+        }
+
+        foreach ($elements as $elementKey => $element) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->delete($this->table)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
+                ->execute();
+
+            foreach ($children[$elementKey] as $child) {
+                $queryBuilder = $this->getQueryBuilder();
+                $queryBuilder->delete($this->table)
+                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
+                    ->execute();
+            }
+        }
+
+        $this->logColPosErrors();
+
+        /*
         $colPosMigrationConfig = [
             0 => 200,
             1 => 201,
