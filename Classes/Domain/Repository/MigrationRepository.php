@@ -75,15 +75,12 @@ class MigrationRepository extends Repository
         $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
     }
 
-
-
     /**
-     * @param $elementsArray
      * @return bool
      * @throws DBALException
      * @throws Exception
      */
-    public function updateAllElements($elementsArray): bool
+    public function updateAllElements(): bool
     {
         $this->logger->info('Start updateAllElements');
 
