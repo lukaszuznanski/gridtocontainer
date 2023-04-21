@@ -231,19 +231,6 @@ class MigrationRepository extends Repository
                     ],
                 ],
             ],
-            [
-                'cType' => '',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                ],
-            ],
         ];
 
         $gridElements = [];
