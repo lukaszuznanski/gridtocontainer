@@ -469,34 +469,62 @@ class MigrationRepository extends Repository
         $children = [];
         foreach ($elements as $element) {
             if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                $fieldName = 'l18n_parent';
+                $queryBuilder = $this->getQueryBuilder();
+                $children[$element['uid']] = $queryBuilder
+                    ->select(
+                        'uid',
+                        'pid',
+                        'colPos',
+                        'backupColPos',
+                        'CType',
+                        'tx_container_parent',
+                        'tx_gridelements_columns',
+                        'tx_gridelements_container',
+                        'tx_gridelements_backend_layout',
+                        'tx_gridelements_children',
+                        'l18n_parent',
+                        'sys_language_uid',
+                        'hidden',
+                        'deleted',
+                        'header',
+                    )
+                    ->from($this->table)
+                    ->where(
+                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($element['uid'])),
+                        $queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0))
+                    )
+                    ->execute()
+                    ->fetchAllAssociative();
             } else {
-                $fieldName = 'tx_gridelements_container';
+                $queryBuilder = $this->getQueryBuilder();
+                $children[$element['uid']] = $queryBuilder
+                    ->select(
+                        'uid',
+                        'pid',
+                        'colPos',
+                        'backupColPos',
+                        'CType',
+                        'tx_container_parent',
+                        'tx_gridelements_columns',
+                        'tx_gridelements_container',
+                        'tx_gridelements_backend_layout',
+                        'tx_gridelements_children',
+                        'l18n_parent',
+                        'sys_language_uid',
+                        'hidden',
+                        'deleted',
+                        'header',
+                    )
+                    ->from($this->table)
+                    ->where(
+                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($element['uid'])),
+                        $queryBuilder->expr()->eq('sys_language_uid', $queryBuilder->createNamedParameter(0))
+                    )
+                    ->execute()
+                    ->fetchAllAssociative();
             }
 
-            $queryBuilder = $this->getQueryBuilder();
-            $children[$element['uid']] = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'backupColPos',
-                    'CType',
-                    'tx_container_parent',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_container',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_children',
-                    'l18n_parent',
-                    'sys_language_uid',
-                    'hidden',
-                    'deleted',
-                    'header',
-                )
-                ->from($this->table)
-                ->where($queryBuilder->expr()->eq($fieldName, $queryBuilder->createNamedParameter($element['uid'])))
-                ->execute()
-                ->fetchAllAssociative();
+
         }
 
         foreach ($elements as $element) {
