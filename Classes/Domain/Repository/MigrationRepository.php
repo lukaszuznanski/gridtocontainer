@@ -288,7 +288,7 @@ class MigrationRepository extends Repository
 
             foreach ($gridElements[$config['cType']] as $gridElement) {
                 $this->logger->info(
-                    'Select where CType=gridelements_pi && tx_gridelements_backend_layout='.$gridElement['cType'],
+                    'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $config['cType'],
                     [
                         'uid' => $gridElement['uid'],
                         'pid' => $gridElement['pid'],
@@ -373,59 +373,61 @@ class MigrationRepository extends Repository
 
         // update content for grids container elements
         foreach ($configs as $config) {
-            foreach ($contentElements as $gridElementUid => $contentElement) {
-                if ($contentElement['tx_gridelements_columns'] === $config['colPos']['gridColPos']) {
+            foreach ($config['colPos'] as $colPosConfig) {
+                foreach ($contentElements as $gridElementUid => $contentElement) {
+                    if ($contentElement['tx_gridelements_columns'] === $colPosConfig['gridColPos']) {
 
-                    if ((int)$contentElement['colPos'] === 0) {
-                        $colPos = 0;
-                    } else if ((int)$contentElement['tx_gridelements_columns'] === $config['colPos']['gridColPos']) {
-                        $colPos = $config['colPos']['containerColPos'];
-                    } else {
-                        $colPos = 0;
+                        if ((int)$contentElement['colPos'] === 0) {
+                            $colPos = 0;
+                        } else if ((int)$contentElement['tx_gridelements_columns'] === $colPosConfig['gridColPos']) {
+                            $colPos = $colPosConfig['containerColPos'];
+                        } else {
+                            $colPos = 0;
+                        }
+
+                        if ((int)$contentElement['sys_language_uid'] > 0 && $colPos === 0) {
+                            $txContainerParent = 0;
+                        } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent']) && (int)$contentElement['l18n_parent'] > 0) {
+                            $txContainerParent = $parents[$contentElement['l18n_parent']];
+                        } else if ($colPos === 0) {
+                            $txContainerParent = $contentElement['tx_gridelements_container'];
+                        } else {
+                            $txContainerParent = $gridElementUid;
+                        }
+
+                        if ($txContainerParent === 0 && $colPos > 0) {
+                            continue;
+                        }
+
+                        $queryBuilder = $this->getQueryBuilder();
+                        $queryBuilder->update($this->table)
+                            ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
+                            ->set('colPos', $colPos)
+                            ->execute();
+
+                        $queryBuilder->update($this->table)
+                            ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
+                            ->set('tx_container_parent', $txContainerParent)
+                            ->execute();
+
+                        $this->logger->info(
+                            'Update Grids Contents ' . $this->table . ' whare UID=' . $contentElement['uid'],
+                            [
+                                'uid' => $contentElement['uid'],
+                                'pid' => $contentElement['pid'],
+                                'colPos' => $colPos,
+                                'backupColPos' => $contentElement['backupColPos'],
+                                'CType' => $contentElement['CType'],
+                                'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
+                                'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
+                                'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
+                                'tx_gridelements_children' => $contentElement['tx_gridelements_children'],
+                                'tx_container_parent' => $txContainerParent,
+                                'l18n_parent' => $contentElement['l18n_parent'],
+                                'sys_language_uid' => $contentElement['sys_language_uid']
+                            ]
+                        );
                     }
-
-                    if ((int)$contentElement['sys_language_uid'] > 0 && $colPos === 0) {
-                        $txContainerParent = 0;
-                    } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent']) && (int)$contentElement['l18n_parent'] > 0) {
-                        $txContainerParent = $parents[$contentElement['l18n_parent']];
-                    } else if ($colPos === 0) {
-                        $txContainerParent = $contentElement['tx_gridelements_container'];
-                    } else {
-                        $txContainerParent = $gridElementUid;
-                    }
-
-                    if ($txContainerParent === 0 && $colPos > 0) {
-                        continue;
-                    }
-
-                    $queryBuilder = $this->getQueryBuilder();
-                    $queryBuilder->update($this->table)
-                        ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
-                        ->set('colPos', $colPos)
-                        ->execute();
-
-                    $queryBuilder->update($this->table)
-                        ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
-                        ->set('tx_container_parent', $txContainerParent)
-                        ->execute();
-
-                    $this->logger->info(
-                        'Update Grids Contents ' . $this->table . ' whare UID=' . $contentElement['uid'],
-                        [
-                            'uid' => $contentElement['uid'],
-                            'pid' => $contentElement['pid'],
-                            'colPos' => $colPos,
-                            'backupColPos' => $contentElement['backupColPos'],
-                            'CType' => $contentElement['CType'],
-                            'tx_gridelements_backend_layout' => $contentElement['tx_gridelements_backend_layout'],
-                            'tx_gridelements_container' => $contentElement['tx_gridelements_container'],
-                            'tx_gridelements_columns' => $contentElement['tx_gridelements_columns'],
-                            'tx_gridelements_children' => $contentElement['tx_gridelements_children'],
-                            'tx_container_parent' => $txContainerParent,
-                            'l18n_parent' => $contentElement['l18n_parent'],
-                            'sys_language_uid' => $contentElement['sys_language_uid']
-                        ]
-                    );
                 }
             }
         }
