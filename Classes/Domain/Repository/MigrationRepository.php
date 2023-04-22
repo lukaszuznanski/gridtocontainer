@@ -208,14 +208,8 @@ class MigrationRepository extends Repository
                 )
                 ->from($this->table)
                 ->where(
-                    $queryBuilder->expr()->like(
-                        'CType',
-                        $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards('gridelements_pi') . '%')
-                    ),
-                    $queryBuilder->expr()->like(
-                        'tx_gridelements_backend_layout',
-                        $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($config['cType']) . '%')
-                    )
+                    $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'),
+                    $queryBuilder->expr()->eq('tx_gridelements_backend_layout', $queryBuilder->createNamedParameter($config['cType']))
                 )
                 ->execute()
                 ->fetchAllAssociative();
@@ -224,7 +218,7 @@ class MigrationRepository extends Repository
 
         foreach ($gridElements as $gridElement) {
             $this->logData(
-                'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $gridElement['cType'],
+                'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $config['cType'],
                 $gridElement
             );
         }
