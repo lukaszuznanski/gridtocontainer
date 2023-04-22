@@ -220,9 +220,9 @@ class MigrationRepository extends Repository
                 ->execute()
                 ->fetchAllAssociative();
 
-            $gridElements[] = $elements;
-
             foreach ($elements as $element) {
+                $gridElements[] = $element;
+
                 $this->logData(
                     'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $config['cType'],
                     $element
@@ -230,9 +230,7 @@ class MigrationRepository extends Repository
             }
         }
 
-        $this->logData(print_r($gridElements, true));
-
-        exit();
+        //$this->logData(print_r($gridElements, true));
 
         /**
          [
