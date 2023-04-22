@@ -131,7 +131,7 @@ class MigrationRepository extends Repository
                             if ((int)$contentElement['sys_language_uid'] > 0 && $colPos === 0) {
                                 $txContainerParent = 0;
                             } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent']) && (int)$contentElement['l18n_parent'] > 0) {
-                                $txContainerParent = $contentElement['parentsList'][$contentElement['l18n_parent']];
+                                $txContainerParent = $contentElements['parentsList'][$contentElement['l18n_parent']];
                             } else if ($colPos === 0) {
                                 $txContainerParent = $contentElement['tx_gridelements_container'];
                             } else {
