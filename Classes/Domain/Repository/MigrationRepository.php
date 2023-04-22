@@ -84,36 +84,42 @@ class MigrationRepository extends Repository
     public function getGridsContainerElements($configs): array
     {
         $gridElements = [];
+        /**
+         [
+            [0] => Array
+                [
+                    [uid] => 98535
+                    [pid] => 12233
+                    [colPos] => 0
+                    [CType] => gridelements_pi1
+                    [tx_gridelements_backend_layout] => fullwidthcompontent
+                    [tx_gridelements_container] => 0
+                    [tx_gridelements_columns] => 0
+                    [tx_gridelements_children] => 1
+                    [tx_container_parent] => 0
+                    [l18n_parent] => 0
+                    [pi_flexform] => 'string'
+                    [sys_language_uid] => 0
+                ]
 
-        /*
-        $gridElements = [
-            'cType' => 'string',
-            'gridsContainerElements' => [
+            [1] => Array
                 [
-                    'uid' => 'int',
-                    'colPos' => 'int',
-                    'CType' => 'string',
-                    'tx_gridelements_backend_layout' => 'int',
-                    'tx_gridelements_container' => 'int',
-                    'tx_gridelements_columns' => 'int',
-                    'l18n_parent' => 'int',
-                    'pi_flexform' => 'string',
-                    'sys_language_uid' => 'int',
-                ],
-                [
-                    'uid' => 'int',
-                    'colPos' => 'int',
-                    'CType' => 'string',
-                    'tx_gridelements_backend_layout' => 'int',
-                    'tx_gridelements_container' => 'int',
-                    'tx_gridelements_columns' => 'int',
-                    'l18n_parent' => 'int',
-                    'pi_flexform' => 'string',
-                    'sys_language_uid' => 'int',
-                ],
-            ],
-        ];
-        */
+                    [uid] => 98543
+                    [pid] => 12895
+                    [colPos] => 0
+                    [backupColPos] => -2
+                    [CType] => gridelements_pi1
+                    [tx_gridelements_backend_layout] => 1-1
+                    [tx_gridelements_container] => 0
+                    [tx_gridelements_columns] => 0
+                    [tx_gridelements_children] => 2
+                    [tx_container_parent] => 0
+                    [l18n_parent] => 89961
+                    [pi_flexform] => 'string'
+                    [sys_language_uid] => 17
+                ]
+         ]
+        **/
 
         foreach ($configs as $key => $config) {
             $queryBuilder = $this->getQueryBuilder();
@@ -160,7 +166,7 @@ class MigrationRepository extends Repository
             );
         }
 
-        $this->logData(print_r($gridElements, true));
+        //$this->logData(print_r($gridElements, true));
 
         return $gridElements;
     }
@@ -174,9 +180,7 @@ class MigrationRepository extends Repository
     public function getGridsContainerContents($gridElements): array
     {
         $contentElements = [];
-
         foreach ($gridElements as $gridElement) {
-
             $queryBuilder = $this->getQueryBuilder();
             $childrenElements = $queryBuilder
                 ->select(
@@ -212,11 +216,9 @@ class MigrationRepository extends Repository
 
         $contentElementsResult = [];
         foreach($contentElements as $gridElementUid => $childrenElements){
-
             if(empty($childrenElements)){
                 continue;
             }
-
             foreach ($childrenElements as $childrenElement) {
                 $contentElementsResult[$gridElementUid][$childrenElement['tx_gridelements_columns']] = $childrenElements;
 
@@ -226,6 +228,8 @@ class MigrationRepository extends Repository
                 );
             }
         }
+
+        $this->logData(print_r($contentElementsResult, true));
 
         return $contentElementsResult;
     }
@@ -412,10 +416,10 @@ class MigrationRepository extends Repository
         ];
 
         $gridElements = $this->getGridsContainerElements($configs);
+        $contentElements = $this->getGridsContainerContents($gridElements);
 
         return true;
 
-        $contentElements = $this->getGridsContainerContents($gridElements);
         $parents = $this->getParentsElements($contentElements);
 
 /*
