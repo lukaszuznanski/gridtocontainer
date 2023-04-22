@@ -76,6 +76,103 @@ class MigrationRepository extends Repository
     }
 
     /**
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function updateAllElements(): bool
+    {
+        $this->logger->info('Start updateAllElements');
+
+        $configs = $this->getConfigs();
+        $gridElements = $this->getGridsContainerElements($configs);
+        $contentElements = $this->getGridsContainerContents($gridElements);
+
+        // update content elements
+        foreach ($configs as $config) {
+            foreach ($config['colPos'] as $configColPos) {
+                foreach ($contentElements['contentList'] as $gridElementUid => $colPosList) {
+                    foreach ($colPosList as $contentElement) {
+                        if ($contentElement['tx_gridelements_columns'] === $configColPos['gridColPos']) {
+
+                            if ((int)$contentElement['colPos'] === 0) {
+                                $colPos = 0;
+                            } else if ((int)$contentElement['tx_gridelements_columns'] === $configColPos['gridColPos']) {
+                                $colPos = $configColPos['containerColPos'];
+                            } else {
+                                $colPos = 0;
+                            }
+
+                            if ((int)$contentElement['sys_language_uid'] > 0 && $colPos === 0) {
+                                $txContainerParent = 0;
+                            } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent']) && (int)$contentElement['l18n_parent'] > 0) {
+                                $txContainerParent = $contentElement['parentsList'][$contentElement['l18n_parent']];
+                            } else if ($colPos === 0) {
+                                $txContainerParent = $contentElement['tx_gridelements_container'];
+                            } else {
+                                $txContainerParent = $gridElementUid;
+                            }
+
+                            if ($txContainerParent === 0 && $colPos > 0) {
+                                continue;
+                            }
+
+                            $queryBuilder = $this->getQueryBuilder();
+                            $queryBuilder->update($this->table)
+                                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
+                                ->set('colPos', $colPos)
+                                ->execute();
+
+                            $queryBuilder->update($this->table)
+                                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
+                                ->set('tx_container_parent', $txContainerParent)
+                                ->execute();
+
+
+                            $contentElement['colPos'] = $colPos;
+                            $contentElement['tx_container_parent'] = $txContainerParent;
+
+                            $this->logData(
+                                'Update Grids Contents ' . $this->table . ' whare UID=' . $contentElement['uid'],
+                                $contentElement
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // update grids elements
+        foreach ($configs as $config) {
+            foreach ($gridElements as $gridElement) {
+
+                $queryBuilder = $this->getQueryBuilder();
+                $queryBuilder->update($this->table)
+                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
+                    ->set('CType', $config['cType'])
+                    ->execute();
+
+                $queryBuilder = $this->getQueryBuilder();
+                $queryBuilder->update($this->table)
+                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
+                    ->set('pi_flexform', $gridElement['pi_flexform'])
+                    ->execute();
+
+                $gridElement['CType'] = $config['cType'];
+
+                $this->logData(
+                    'Update Grids Elements ' . $this->table . ' whare UID=' . $gridElement['uid'],
+                    $gridElement
+                );
+            }
+        }
+
+        $this->logger->info('End updateAllElements');
+
+        return true;
+    }
+
+    /**
      * @param $configs
      * @return array
      * @throws DBALException
@@ -84,43 +181,6 @@ class MigrationRepository extends Repository
     public function getGridsContainerElements($configs): array
     {
         $gridElements = [];
-        /**
-         [
-            [0] => Array
-                [
-                    [uid] => 98535
-                    [pid] => 12233
-                    [colPos] => 0
-                    [CType] => gridelements_pi1
-                    [tx_gridelements_backend_layout] => fullwidthcompontent
-                    [tx_gridelements_container] => 0
-                    [tx_gridelements_columns] => 0
-                    [tx_gridelements_children] => 1
-                    [tx_container_parent] => 0
-                    [l18n_parent] => 0
-                    [pi_flexform] => 'string'
-                    [sys_language_uid] => 0
-                ]
-
-            [1] => Array
-                [
-                    [uid] => 98543
-                    [pid] => 12895
-                    [colPos] => 0
-                    [backupColPos] => -2
-                    [CType] => gridelements_pi1
-                    [tx_gridelements_backend_layout] => 1-1
-                    [tx_gridelements_container] => 0
-                    [tx_gridelements_columns] => 0
-                    [tx_gridelements_children] => 2
-                    [tx_container_parent] => 0
-                    [l18n_parent] => 89961
-                    [pi_flexform] => 'string'
-                    [sys_language_uid] => 17
-                ]
-         ]
-        **/
-
         foreach ($configs as $config) {
             $queryBuilder = $this->getQueryBuilder();
 
@@ -159,17 +219,51 @@ class MigrationRepository extends Repository
             $gridElements += $grids;
         }
 
-        /*
         foreach ($gridElements as $gridElement) {
             $this->logData(
                 'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $gridElement['cType'],
                 $gridElement
             );
         }
-        */
 
         //$this->logData(print_r($gridElements, true));
 
+        /**
+         [
+            [0] => Array
+                [
+                    [uid] => 98535
+                    [pid] => 12233
+                    [colPos] => 0
+                    [CType] => gridelements_pi1
+                    [tx_gridelements_backend_layout] => fullwidthcompontent
+                    [tx_gridelements_container] => 0
+                    [tx_gridelements_columns] => 0
+                    [tx_gridelements_children] => 1
+                    [tx_container_parent] => 0
+                    [l18n_parent] => 0
+                    [pi_flexform] => 'string'
+                    [sys_language_uid] => 0
+                ]
+
+            [1] => Array
+                [
+                    [uid] => 98543
+                    [pid] => 12895
+                    [colPos] => 0
+                    [backupColPos] => -2
+                    [CType] => gridelements_pi1
+                    [tx_gridelements_backend_layout] => 1-1
+                    [tx_gridelements_container] => 0
+                    [tx_gridelements_columns] => 0
+                    [tx_gridelements_children] => 2
+                    [tx_container_parent] => 0
+                    [l18n_parent] => 89961
+                    [pi_flexform] => 'string'
+                    [sys_language_uid] => 17
+                ]
+         ]
+        **/
         return $gridElements;
     }
 
@@ -182,101 +276,6 @@ class MigrationRepository extends Repository
     public function getGridsContainerContents($gridElements): array
     {
         $contentElements = [];
-
-        /**
-        // key = grid element uid
-        [98543] => Array
-            [
-                // key = colPos int
-                [1] => Array
-                    [
-                        // content from grid element
-                        [0] => Array
-                            [
-                                [uid] => 98541
-                                [pid] => 12895
-                                [colPos] => -1
-                                [backupColPos] => -2
-                                [CType] => gridelements_pi1
-                                [tx_gridelements_backend_layout] => 1-2_1-2
-                                [tx_gridelements_container] => 98543
-                                [tx_gridelements_columns] => 1
-                                [tx_gridelements_children] => 2
-                                [tx_container_parent] => 0
-                                [l18n_parent] => 89959
-                                [hidden] => 0
-                                [deleted] => 0
-                                [header] =>
-                                [pi_flexform] =>
-                                [sys_language_uid] => 17
-                            ]
-                        // content from grid element
-                        [1] => Array
-                            [
-                                [uid] => 98542
-                                [pid] => 12895
-                                [colPos] => -1
-                                [backupColPos] => -2
-                                [CType] => header
-                                [tx_gridelements_backend_layout] => 0
-                                [tx_gridelements_container] => 98543
-                                [tx_gridelements_columns] => 0
-                                [tx_gridelements_children] => 0
-                                [tx_container_parent] => 0
-                                [l18n_parent] => 89960
-                                [hidden] => 0
-                                [deleted] => 0
-                                [header] => LEARNING POWERED BY NAVIO
-                                [pi_flexform] =>
-                                [sys_language_uid] => 17
-                            ]
-                    ]
-                // key = colPos int
-                [0] => Array
-                    [
-                        // content from grid element
-                        [0] => Array
-                            [
-                                [uid] => 98541
-                                [pid] => 12895
-                                [colPos] => -1
-                                [backupColPos] => -2
-                                [CType] => gridelements_pi1
-                                [tx_gridelements_backend_layout] => 1-2_1-2
-                                [tx_gridelements_container] => 98543
-                                [tx_gridelements_columns] => 1
-                                [tx_gridelements_children] => 2
-                                [tx_container_parent] => 0
-                                [l18n_parent] => 89959
-                                [hidden] => 0
-                                [deleted] => 0
-                                [header] =>
-                                [pi_flexform] =>
-                                [sys_language_uid] => 17
-                            ]
-                        // content from grid element
-                        [1] => Array
-                            [
-                                [uid] => 98542
-                                [pid] => 12895
-                                [colPos] => -1
-                                [backupColPos] => -2
-                                [CType] => header
-                                [tx_gridelements_backend_layout] => 0
-                                [tx_gridelements_container] => 98543
-                                [tx_gridelements_columns] => 0
-                                [tx_gridelements_children] => 0
-                                [tx_container_parent] => 0
-                                [l18n_parent] => 89960
-                                [hidden] => 0
-                                [deleted] => 0
-                                [header] => LEARNING POWERED BY NAVIO
-                                [pi_flexform] =>
-                                [sys_language_uid] => 17
-                            ]
-                    ]
-            ]
-         */
 
         foreach ($gridElements as $gridElement) {
             $queryBuilder = $this->getQueryBuilder();
@@ -318,57 +317,133 @@ class MigrationRepository extends Repository
                 continue;
             }
             foreach ($childrenElements as $childrenElement) {
-                $contentElementsResult[$gridElementUid][$childrenElement['tx_gridelements_columns']] = $childrenElements;
+                $contentElementsResult['contentList'][$gridElementUid][$childrenElement['tx_gridelements_columns']] = $childrenElements;
+                $contentElementsResult['parentsList'][$childrenElement['uid']] = $childrenElements['tx_gridelements_container'];
 
-                /*
                 $this->logData(
                     'Select where tx_gridelements_container=' . $childrenElement['uid'] . ' OR l18n_parent=' . $gridElementUid,
                     $childrenElement
                 );
-                */
             }
         }
 
-        $this->logData(print_r($contentElementsResult, true));
+        //$this->logData(print_r($contentElementsResult, true));
+
+        /**
+        ['parentsList'] => Array
+            [
+                // 'content uid' => parent element uid
+                '98543' => 12132 (parent element uid)
+                '98544' => 12132 (parent element uid)
+                '98545' => 12132 (parent element uid)
+            ]
+        ['contentList'] => Array
+            // key = grid element uid
+            [98543] => Array
+                [
+                    // key = colPos int
+                    [1] => Array
+                        // contents list from grid element
+                        [
+                            // content from grid element
+                            [0] => Array
+                                [
+                                    [uid] => 98541
+                                    [pid] => 12895
+                                    [colPos] => -1
+                                    [backupColPos] => -2
+                                    [CType] => gridelements_pi1
+                                    [tx_gridelements_backend_layout] => 1-2_1-2
+                                    [tx_gridelements_container] => 98543
+                                    [tx_gridelements_columns] => 1
+                                    [tx_gridelements_children] => 2
+                                    [tx_container_parent] => 0
+                                    [l18n_parent] => 89959
+                                    [hidden] => 0
+                                    [deleted] => 0
+                                    [header] =>
+                                    [pi_flexform] =>
+                                    [sys_language_uid] => 17
+                                ]
+                            // content from grid element
+                            [1] => Array
+                                [
+                                    [uid] => 98542
+                                    [pid] => 12895
+                                    [colPos] => -1
+                                    [backupColPos] => -2
+                                    [CType] => header
+                                    [tx_gridelements_backend_layout] => 0
+                                    [tx_gridelements_container] => 98543
+                                    [tx_gridelements_columns] => 0
+                                    [tx_gridelements_children] => 0
+                                    [tx_container_parent] => 0
+                                    [l18n_parent] => 89960
+                                    [hidden] => 0
+                                    [deleted] => 0
+                                    [header] => LEARNING POWERED BY NAVIO
+                                    [pi_flexform] =>
+                                    [sys_language_uid] => 17
+                                ]
+                        ]
+                    // key = colPos int
+                    [0] => Array
+                        [
+                            // content from grid element
+                            [0] => Array
+                                [
+                                    [uid] => 98541
+                                    [pid] => 12895
+                                    [colPos] => -1
+                                    [backupColPos] => -2
+                                    [CType] => gridelements_pi1
+                                    [tx_gridelements_backend_layout] => 1-2_1-2
+                                    [tx_gridelements_container] => 98543
+                                    [tx_gridelements_columns] => 1
+                                    [tx_gridelements_children] => 2
+                                    [tx_container_parent] => 0
+                                    [l18n_parent] => 89959
+                                    [hidden] => 0
+                                    [deleted] => 0
+                                    [header] =>
+                                    [pi_flexform] =>
+                                    [sys_language_uid] => 17
+                                ]
+                            // content from grid element
+                            [1] => Array
+                                [
+                                    [uid] => 98542
+                                    [pid] => 12895
+                                    [colPos] => -1
+                                    [backupColPos] => -2
+                                    [CType] => header
+                                    [tx_gridelements_backend_layout] => 0
+                                    [tx_gridelements_container] => 98543
+                                    [tx_gridelements_columns] => 0
+                                    [tx_gridelements_children] => 0
+                                    [tx_container_parent] => 0
+                                    [l18n_parent] => 89960
+                                    [hidden] => 0
+                                    [deleted] => 0
+                                    [header] => LEARNING POWERED BY NAVIO
+                                    [pi_flexform] =>
+                                    [sys_language_uid] => 17
+                                ]
+                        ]
+                ]
+        */
 
         return $contentElementsResult;
     }
 
     /**
-     * @param $contentElements
-     * @return array
+     * @return array[]
      */
-    public function getParentsElements($contentElements): array
+    public function getConfigs(): array
     {
-        $parents = [];
-        foreach ($contentElements as $gridElementUid => $childrenElements) {
-            foreach ($childrenElements as $tx_gridelements_columns => $childrenElement) {
-
-                if ($childrenElement['sys_language_uid'] > 0 && $childrenElement['l18n_parent'] > 0) {
-                    $parents[$childrenElement['uid']] = $childrenElement['l18n_parent'];
-                } else {
-                    $parents[$childrenElement['uid']] = $childrenElement['tx_gridelements_container'];
-                }
-
-                $this->logData('getParentsElements', $childrenElement);
-            }
-        }
-
-        return $parents;
-    }
-
-    /**
-     * @return bool
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function updateAllElements(): bool
-    {
-        $this->logger->info('Start updateAllElements');
-
-        $configs = [
+        return [
             [
-                'cType' => 'fullwidthcompontent',   // cType
+                'cType' => 'fullwidthcompontent',   // cType / grid element type / b13/container type
                 'colPos' => [
                     [
                         'gridColPos' => 0,         // grid element colPos
@@ -514,110 +589,6 @@ class MigrationRepository extends Repository
                 ],
             ],
         ];
-
-        $gridElements = $this->getGridsContainerElements($configs);
-        $contentElements = $this->getGridsContainerContents($gridElements);
-
-        return true;
-
-        $parents = $this->getParentsElements($contentElements);
-
-/*
-        $configs = [
-            [
-                'cType' => 'fullwidthcompontent',   // cType
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,         // grid element colPos
-                        'containerColPos' => 200,  // b13/container colPos
-                    ],
-                    [
-                        'gridColPos' => 1,         // grid element colPos
-                        'containerColPos' => 201,  // b13/container colPos
-                    ],
-                ]
-            ],
-*/
-        // update content for grids container elements
-        foreach ($configs as $config) {
-            foreach ($config['colPos'] as $colPosConfig) {
-                foreach ($contentElements as $gridElementUid => $contentElement) {
-                    if ($contentElement['tx_gridelements_columns'] === $colPosConfig['gridColPos']) {
-
-                        if ((int)$contentElement['colPos'] === 0) {
-                            $colPos = 0;
-                        } else if ((int)$contentElement['tx_gridelements_columns'] === $colPosConfig['gridColPos']) {
-                            $colPos = $colPosConfig['containerColPos'];
-                        } else {
-                            $colPos = 0;
-                        }
-
-                        if ((int)$contentElement['sys_language_uid'] > 0 && $colPos === 0) {
-                            $txContainerParent = 0;
-                        } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent']) && (int)$contentElement['l18n_parent'] > 0) {
-                            $txContainerParent = $parents[$contentElement['l18n_parent']];
-                        } else if ($colPos === 0) {
-                            $txContainerParent = $contentElement['tx_gridelements_container'];
-                        } else {
-                            $txContainerParent = $gridElementUid;
-                        }
-
-                        if ($txContainerParent === 0 && $colPos > 0) {
-                            continue;
-                        }
-
-                        $queryBuilder = $this->getQueryBuilder();
-                        $queryBuilder->update($this->table)
-                            ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
-                            ->set('colPos', $colPos)
-                            ->execute();
-
-                        $queryBuilder->update($this->table)
-                            ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
-                            ->set('tx_container_parent', $txContainerParent)
-                            ->execute();
-
-
-                        $contentElement['colPos'] = $colPos;
-                        $contentElement['tx_container_parent'] = $txContainerParent;
-
-                        $this->logData(
-                            'Update Grids Contents ' . $this->table . ' whare UID=' . $contentElement['uid'],
-                            $contentElement
-                        );
-                    }
-                }
-            }
-        }
-
-        // update grid elements
-        foreach ($configs as $config) {
-            foreach ($gridElements as $gridElement) {
-
-                $queryBuilder = $this->getQueryBuilder();
-                $queryBuilder->update($this->table)
-                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
-                    ->set('CType', $config['cType'])
-                    ->execute();
-
-                $queryBuilder = $this->getQueryBuilder();
-                $queryBuilder->update($this->table)
-                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
-                    ->set('pi_flexform', $gridElement['pi_flexform'])
-                    ->execute();
-
-                $gridElement['CType'] = $config['cType'];
-
-                $this->logData(
-                    'Update Grids Elements ' . $this->table . ' whare UID=' . $gridElement['uid'],
-                    $gridElement
-                );
-            }
-        }
-
-        $this->logger->info('End updateAllElements');
-
-        return true;
     }
 
     /**
