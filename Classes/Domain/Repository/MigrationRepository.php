@@ -83,7 +83,7 @@ class MigrationRepository extends Repository
      */
     public function updateAllElements(): bool
     {
-        $this->logger->info('Start updateAllElements');
+        $this->logData('Start updateAllElements');
 
         $configs = $this->getConfigs();
         $gridElements = $this->getGridsContainerElements($configs);
@@ -168,7 +168,7 @@ class MigrationRepository extends Repository
             }
         }
 
-        $this->logger->info('End updateAllElements');
+        $this->logData('End updateAllElements');
 
         return true;
     }
@@ -181,6 +181,8 @@ class MigrationRepository extends Repository
      */
     public function getGridsContainerElements($configs): array
     {
+        $this->logData('Start getGridsContainerElements');
+
         $gridElements = [];
         foreach ($configs as $config) {
             $queryBuilder = $this->getQueryBuilder();
@@ -265,6 +267,9 @@ class MigrationRepository extends Repository
                 ]
          ]
         **/
+
+        $this->logData('End getGridsContainerElements');
+
         return $gridElements;
     }
 
@@ -276,8 +281,9 @@ class MigrationRepository extends Repository
      */
     public function getGridsContainerContents($gridElements): array
     {
-        $contentElements = [];
+        $this->logData('Start getGridsContainerContents');
 
+        $contentElements = [];
         foreach ($gridElements as $gridElement) {
             $queryBuilder = $this->getQueryBuilder();
             $childrenElements = $queryBuilder
@@ -433,6 +439,8 @@ class MigrationRepository extends Repository
                         ]
                 ]
         */
+
+        $this->logData('End getGridsContainerContents');
 
         return $contentElementsResult;
     }
