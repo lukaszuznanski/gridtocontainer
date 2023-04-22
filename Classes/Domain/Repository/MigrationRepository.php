@@ -177,43 +177,137 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function getGridsContainerContents($configs, $gridElements): array
+    public function getGridsContainerContents($gridElements): array
     {
         $contentElements = [];
-        foreach ($configs as $config) {
-            foreach ($gridElements as $gridElement) {
-                $queryBuilder = $this->getQueryBuilder();
-                $childrenElements = $queryBuilder
-                    ->select(
-                        'uid',
-                        'pid',
-                        'colPos',
-                        'backupColPos',
-                        'CType',
-                        'tx_gridelements_backend_layout',
-                        'tx_gridelements_container',
-                        'tx_gridelements_columns',
-                        'tx_gridelements_children',
-                        'tx_container_parent',
-                        'l18n_parent',
-                        'hidden',
-                        'deleted',
-                        'header',
-                        'pi_flexform',
-                        'sys_language_uid ',
-                    )
-                    ->from($this->table)
-                    ->where(
-                        $queryBuilder->expr()->eq('tx_gridelements_container', $gridElement['uid'])
-                    )
-                    ->orWhere(
-                        $queryBuilder->expr()->eq('l18n_parent', $gridElement['uid'])
-                    )
-                    ->execute()
-                    ->fetchAllAssociative();
 
-                $contentElements[$gridElement['uid']] = $childrenElements;
-            }
+        /**
+        // key = grid element uid
+        [98543] => Array
+            [
+                // key = colPos int
+                [1] => Array
+                    [
+                        // content from grid element
+                        [0] => Array
+                            [
+                                [uid] => 98541
+                                [pid] => 12895
+                                [colPos] => -1
+                                [backupColPos] => -2
+                                [CType] => gridelements_pi1
+                                [tx_gridelements_backend_layout] => 1-2_1-2
+                                [tx_gridelements_container] => 98543
+                                [tx_gridelements_columns] => 1
+                                [tx_gridelements_children] => 2
+                                [tx_container_parent] => 0
+                                [l18n_parent] => 89959
+                                [hidden] => 0
+                                [deleted] => 0
+                                [header] =>
+                                [pi_flexform] =>
+                                [sys_language_uid] => 17
+                            ]
+                        // content from grid element
+                        [1] => Array
+                            [
+                                [uid] => 98542
+                                [pid] => 12895
+                                [colPos] => -1
+                                [backupColPos] => -2
+                                [CType] => header
+                                [tx_gridelements_backend_layout] => 0
+                                [tx_gridelements_container] => 98543
+                                [tx_gridelements_columns] => 0
+                                [tx_gridelements_children] => 0
+                                [tx_container_parent] => 0
+                                [l18n_parent] => 89960
+                                [hidden] => 0
+                                [deleted] => 0
+                                [header] => LEARNING POWERED BY NAVIO
+                                [pi_flexform] =>
+                                [sys_language_uid] => 17
+                            ]
+                    ]
+                // key = colPos int
+                [0] => Array
+                    [
+                        // content from grid element
+                        [0] => Array
+                            [
+                                [uid] => 98541
+                                [pid] => 12895
+                                [colPos] => -1
+                                [backupColPos] => -2
+                                [CType] => gridelements_pi1
+                                [tx_gridelements_backend_layout] => 1-2_1-2
+                                [tx_gridelements_container] => 98543
+                                [tx_gridelements_columns] => 1
+                                [tx_gridelements_children] => 2
+                                [tx_container_parent] => 0
+                                [l18n_parent] => 89959
+                                [hidden] => 0
+                                [deleted] => 0
+                                [header] =>
+                                [pi_flexform] =>
+                                [sys_language_uid] => 17
+                            ]
+                        // content from grid element
+                        [1] => Array
+                            [
+                                [uid] => 98542
+                                [pid] => 12895
+                                [colPos] => -1
+                                [backupColPos] => -2
+                                [CType] => header
+                                [tx_gridelements_backend_layout] => 0
+                                [tx_gridelements_container] => 98543
+                                [tx_gridelements_columns] => 0
+                                [tx_gridelements_children] => 0
+                                [tx_container_parent] => 0
+                                [l18n_parent] => 89960
+                                [hidden] => 0
+                                [deleted] => 0
+                                [header] => LEARNING POWERED BY NAVIO
+                                [pi_flexform] =>
+                                [sys_language_uid] => 17
+                            ]
+                    ]
+            ]
+         */
+
+        foreach ($gridElements as $gridElement) {
+            $queryBuilder = $this->getQueryBuilder();
+            $childrenElements = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'backupColPos',
+                    'CType',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_container',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_children',
+                    'tx_container_parent',
+                    'l18n_parent',
+                    'hidden',
+                    'deleted',
+                    'header',
+                    'pi_flexform',
+                    'sys_language_uid ',
+                )
+                ->from($this->table)
+                ->where(
+                    $queryBuilder->expr()->eq('tx_gridelements_container', $gridElement['uid'])
+                )
+                ->orWhere(
+                    $queryBuilder->expr()->eq('l18n_parent', $gridElement['uid'])
+                )
+                ->execute()
+                ->fetchAllAssociative();
+
+            $contentElements[$gridElement['uid']] = $childrenElements;
         }
 
         $contentElementsResult = [];
@@ -418,7 +512,7 @@ class MigrationRepository extends Repository
         ];
 
         $gridElements = $this->getGridsContainerElements($configs);
-        $contentElements = $this->getGridsContainerContents($configs, $gridElements);
+        $contentElements = $this->getGridsContainerContents($gridElements);
 
         return true;
 
