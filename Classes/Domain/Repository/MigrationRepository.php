@@ -159,12 +159,14 @@ class MigrationRepository extends Repository
             $gridElements += $grids;
         }
 
+        /*
         foreach ($gridElements as $gridElement) {
             $this->logData(
                 'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $gridElement['cType'],
                 $gridElement
             );
         }
+        */
 
         //$this->logData(print_r($gridElements, true));
 
@@ -318,10 +320,12 @@ class MigrationRepository extends Repository
             foreach ($childrenElements as $childrenElement) {
                 $contentElementsResult[$gridElementUid][$childrenElement['tx_gridelements_columns']] = $childrenElements;
 
+                /*
                 $this->logData(
                     'Select where tx_gridelements_container=' . $childrenElement['uid'] . ' OR l18n_parent=' . $gridElementUid,
                     $childrenElement
                 );
+                */
             }
         }
 
