@@ -333,11 +333,17 @@ class MigrationRepository extends Repository
                 ->execute()
                 ->fetchAllAssociative();
 
-            foreach ($childrenElements as $childrenElement) {
-                $contentElementsResult['parentsList'][$childrenElement['uid']] = $childrenElement['tx_gridelements_container'];
+            if (empty($childrenElements)) {
+                continue;
             }
 
-            $contentElementsResult['contentList'][$gridElement['uid']] = $childrenElements;
+            foreach ($childrenElements as $childrenElement) {
+                if (empty($childrenElement)) {
+                    continue;
+                }
+                $contentElementsResult['contentList'][$gridElement['uid']][] = $childrenElement;
+                $contentElementsResult['parentsList'][$childrenElement['uid']] = $childrenElement['tx_gridelements_container'];
+            }
         }
 
         foreach ($contentElementsResult['contentList'] as $gridElementUid => $childrenElements) {
