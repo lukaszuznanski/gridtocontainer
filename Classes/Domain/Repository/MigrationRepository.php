@@ -90,6 +90,22 @@ class MigrationRepository extends Repository
         $gridElements = $this->getGridsContainerElements($configs);
         $contentElements = $this->getGridsContainerContents($gridElements);
 
+        /**
+        ['contentList'] => Array
+            // key = grid element uid
+            [98543] => Array
+                [
+                    // key = colPos int
+                    [1] => Array
+                        // contents list from grid element
+                        [
+                            // content from grid element
+                            [0] => Array
+                                [
+                                    [uid] => 98541
+                                    [pid] => 12895
+         */
+
         // update content elements
         foreach ($configs as $config) {
             foreach ($config['colPos'] as $configColPos) {
@@ -284,7 +300,7 @@ class MigrationRepository extends Repository
     {
         $this->logData('Start getGridsContainerContents');
 
-        $contentElements = [];
+        $contentElementsResult = [];
         foreach ($gridElements as $gridElement) {
             $queryBuilder = $this->getQueryBuilder();
             $childrenElements = $queryBuilder
@@ -316,18 +332,15 @@ class MigrationRepository extends Repository
                 ->execute()
                 ->fetchAllAssociative();
 
-            $contentElements[$gridElement['uid']] = $childrenElements;
+            foreach ($childrenElements as $childrenElement) {
+                $contentElementsResult['parentsList'][$childrenElement['uid']] = $childrenElements['tx_gridelements_container'];
+            }
+
+            $contentElementsResult['contentList'][$gridElement['uid']] = $childrenElements;
         }
 
-        $contentElementsResult = [];
-        foreach($contentElements as $gridElementUid => $childrenElements){
-            if(empty($childrenElements)){
-                continue;
-            }
+        foreach ($contentElementsResult['contentList'] as $gridElementUid => $childrenElements) {
             foreach ($childrenElements as $childrenElement) {
-                $contentElementsResult['contentList'][$gridElementUid][$childrenElement['tx_gridelements_columns']] = $childrenElements;
-                $contentElementsResult['parentsList'][$childrenElement['uid']] = $childrenElements['tx_gridelements_container'];
-
                 $this->logData(
                     'Select where tx_gridelements_container=' . $childrenElement['uid'] . ' OR l18n_parent=' . $gridElementUid,
                     $childrenElement
