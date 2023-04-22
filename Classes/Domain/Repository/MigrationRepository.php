@@ -648,7 +648,7 @@ class MigrationRepository extends Repository
         $this->logger->info('Start - removeAllColPosErrors');
 
         $queryBuilder = $this->getQueryBuilder();
-        $elements = $queryBuilder
+        $gridElements = $queryBuilder
             ->select(
                 'uid',
                 'pid',
@@ -667,16 +667,25 @@ class MigrationRepository extends Repository
                 'header',
             )
             ->from($this->table)
-            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
-            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->where(
+                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)),
+                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+            )
+            ->orWhere(
+                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)),
+                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'))
+            ->orWhere(
+                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(1)),
+                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+            )
             ->execute()
             ->fetchAllAssociative();
 
         $children = [];
-        foreach ($elements as $element) {
-            $queryBuilder = $this->getQueryBuilder();
-            if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                $children[$element['uid']] = $queryBuilder
+        foreach ($gridElements as $gridElement) {
+            if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
+                $queryBuilder = $this->getQueryBuilder();
+                $children[$gridElement['uid']] = $queryBuilder
                     ->select(
                         'uid',
                         'pid',
@@ -696,13 +705,14 @@ class MigrationRepository extends Repository
                     )
                     ->from($this->table)
                     ->where(
-                        $queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($element['uid'])),
+                        $queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($gridElement['uid'])),
                         $queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0))
                     )
                     ->execute()
                     ->fetchAllAssociative();
             } else {
-                $children[$element['uid']] = $queryBuilder
+                $queryBuilder = $this->getQueryBuilder();
+                $children[$gridElement['uid']] = $queryBuilder
                     ->select(
                         'uid',
                         'pid',
@@ -722,7 +732,7 @@ class MigrationRepository extends Repository
                     )
                     ->from($this->table)
                     ->where(
-                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($element['uid'])),
+                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($gridElement['uid'])),
                         $queryBuilder->expr()->eq('sys_language_uid', $queryBuilder->createNamedParameter(0))
                     )
                     ->execute()
@@ -732,52 +742,26 @@ class MigrationRepository extends Repository
 
         }
 
-        foreach ($elements as $element) {
+        foreach ($gridElements as $gridElement) {
             $queryBuilder = $this->getQueryBuilder();
             $queryBuilder->delete($this->table)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
                 ->execute();
 
-            $this->logger->info(
-                'Remove All Col Pos Errors: ' . $this->table . ' whare UID=' . $element['uid'],
-                [
-                    'uid' => $element['uid'],
-                    'pid' => $element['pid'],
-                    'colPos' => $element['colPos'],
-                    'backupColPos' => $element['backupColPos'],
-                    'CType' => $element['CType'],
-                    'tx_gridelements_backend_layout' => $element['tx_gridelements_backend_layout'],
-                    'tx_gridelements_container' => $element['tx_gridelements_container'],
-                    'tx_gridelements_columns' => $element['tx_gridelements_columns'],
-                    'tx_gridelements_children' => $element['tx_gridelements_children'],
-                    'tx_container_parent' => $element['tx_container_parent'],
-                    'l18n_parent' => $element['l18n_parent'],
-                    'sys_language_uid' => $element['sys_language_uid']
-                ]
+            $this->logData(
+                'Remove colPos Errors id=' . $gridElement['uid'],
+                $gridElement
             );
 
-            foreach ($children[$element['uid']] as $child) {
+            foreach ($children[$gridElement['uid']] as $child) {
                 $queryBuilder = $this->getQueryBuilder();
                 $queryBuilder->delete($this->table)
                     ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
                     ->execute();
 
-                $this->logger->info(
-                    'Remove All Col Pos Errors: ' . $this->table . ' whare UID=' . $child['uid'],
-                    [
-                        'uid' => $child['uid'],
-                        'pid' => $child['pid'],
-                        'colPos' => $child['colPos'],
-                        'backupColPos' => $child['backupColPos'],
-                        'CType' => $child['CType'],
-                        'tx_gridelements_backend_layout' => $child['tx_gridelements_backend_layout'],
-                        'tx_gridelements_container' => $child['tx_gridelements_container'],
-                        'tx_gridelements_columns' => $child['tx_gridelements_columns'],
-                        'tx_gridelements_children' => $child['tx_gridelements_children'],
-                        'tx_container_parent' => $child['tx_container_parent'],
-                        'l18n_parent' => $child['l18n_parent'],
-                        'sys_language_uid' => $child['sys_language_uid']
-                    ]
+                $this->logData(
+                    'Remove child colPos Errors id=' . $child['uid'],
+                    $child
                 );
             }
         }
