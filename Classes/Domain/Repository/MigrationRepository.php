@@ -192,8 +192,7 @@ class MigrationRepository extends Repository
         $gridElements = [];
         foreach ($configs as $config) {
             $queryBuilder = $this->getQueryBuilder();
-
-            $grids = $queryBuilder
+             $elements = $queryBuilder
                 ->select(
                     'uid',
                     'pid',
@@ -219,14 +218,15 @@ class MigrationRepository extends Repository
                 )
                 ->execute()
                 ->fetchAllAssociative();
-            $gridElements += $grids;
-        }
 
-        foreach ($gridElements as $gridElement) {
-            $this->logData(
-                'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $config['cType'],
-                $gridElement
-            );
+            $gridElements[] = $elements;
+
+            foreach ($elements as $element) {
+                $this->logData(
+                    'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $config['cType'],
+                    $element
+                );
+            }
         }
 
         //$this->logData(print_r($gridElements, true));
