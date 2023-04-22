@@ -5,6 +5,7 @@ namespace SBublies\Gridtocontainer\Domain\Repository;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Exception;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Extbase\Persistence\Repository;
@@ -229,7 +230,9 @@ class MigrationRepository extends Repository
             }
         }
 
-        //$this->logData(print_r($gridElements, true));
+        $this->logData(print_r($gridElements, true));
+
+        exit();
 
         /**
          [
@@ -1065,6 +1068,8 @@ class MigrationRepository extends Repository
      */
     protected function getQueryBuilder(): QueryBuilder
     {
-        return GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+        return $queryBuilder;
     }
 }
