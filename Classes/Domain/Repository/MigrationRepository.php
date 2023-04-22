@@ -121,7 +121,7 @@ class MigrationRepository extends Repository
          ]
         **/
 
-        foreach ($configs as $key => $config) {
+        foreach ($configs as $config) {
             $queryBuilder = $this->getQueryBuilder();
 
             $grids = $queryBuilder
@@ -177,41 +177,43 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function getGridsContainerContents($gridElements): array
+    public function getGridsContainerContents($configs, $gridElements): array
     {
         $contentElements = [];
-        foreach ($gridElements as $gridElement) {
-            $queryBuilder = $this->getQueryBuilder();
-            $childrenElements = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'backupColPos',
-                    'CType',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_container',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_children',
-                    'tx_container_parent',
-                    'l18n_parent',
-                    'hidden',
-                    'deleted',
-                    'header',
-                    'pi_flexform',
-                    'sys_language_uid ',
-                )
-                ->from($this->table)
-                ->where(
-                    $queryBuilder->expr()->eq('tx_gridelements_container', $gridElement['uid'])
-                )
-                ->orWhere(
-                    $queryBuilder->expr()->eq('l18n_parent', $gridElement['uid'])
-                )
-                ->execute()
-                ->fetchAllAssociative();
+        foreach ($configs as $config) {
+            foreach ($gridElements as $gridElement) {
+                $queryBuilder = $this->getQueryBuilder();
+                $childrenElements = $queryBuilder
+                    ->select(
+                        'uid',
+                        'pid',
+                        'colPos',
+                        'backupColPos',
+                        'CType',
+                        'tx_gridelements_backend_layout',
+                        'tx_gridelements_container',
+                        'tx_gridelements_columns',
+                        'tx_gridelements_children',
+                        'tx_container_parent',
+                        'l18n_parent',
+                        'hidden',
+                        'deleted',
+                        'header',
+                        'pi_flexform',
+                        'sys_language_uid ',
+                    )
+                    ->from($this->table)
+                    ->where(
+                        $queryBuilder->expr()->eq('tx_gridelements_container', $gridElement['uid'])
+                    )
+                    ->orWhere(
+                        $queryBuilder->expr()->eq('l18n_parent', $gridElement['uid'])
+                    )
+                    ->execute()
+                    ->fetchAllAssociative();
 
-            $contentElements[$gridElement['uid']] = $childrenElements;
+                $contentElements[$gridElement['uid']] = $childrenElements;
+            }
         }
 
         $contentElementsResult = [];
@@ -416,7 +418,7 @@ class MigrationRepository extends Repository
         ];
 
         $gridElements = $this->getGridsContainerElements($configs);
-        $contentElements = $this->getGridsContainerContents($gridElements);
+        $contentElements = $this->getGridsContainerContents($configs, $gridElements);
 
         return true;
 
