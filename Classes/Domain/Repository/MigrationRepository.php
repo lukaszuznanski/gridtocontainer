@@ -213,44 +213,38 @@ class MigrationRepository extends Repository
     {
         $this->logData('Start getGridsContainerElements');
 
-        $gridElements = [];
-        foreach ($configs as $config) {
-            $queryBuilder = $this->getQueryBuilder();
-             $elements = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'backupColPos',
-                    'CType',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_container',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_children',
-                    'tx_container_parent',
-                    'l18n_parent',
-                    'hidden',
-                    'deleted',
-                    'header',
-                    'pi_flexform',
-                    'sys_language_uid ',
-                )
-                ->from($this->table)
-                ->where(
-                    $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'),
-                    $queryBuilder->expr()->eq('tx_gridelements_backend_layout', $queryBuilder->createNamedParameter($config['cType']))
-                )
-                ->execute()
-                ->fetchAllAssociative();
+        $queryBuilder = $this->getQueryBuilder();
+        $gridElements = $queryBuilder
+            ->select(
+                'uid',
+                'pid',
+                'colPos',
+                'backupColPos',
+                'CType',
+                'tx_gridelements_backend_layout',
+                'tx_gridelements_container',
+                'tx_gridelements_columns',
+                'tx_gridelements_children',
+                'tx_container_parent',
+                'l18n_parent',
+                'hidden',
+                'deleted',
+                'header',
+                'pi_flexform',
+                'sys_language_uid ',
+            )
+            ->from($this->table)
+            ->where(
+                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+            )
+            ->execute()
+            ->fetchAllAssociative();
 
-            foreach ($elements as $element) {
-                $gridElements[] = $element;
-
-                $this->logData(
-                    'Select where CType=gridelements_pi && tx_gridelements_backend_layout=' . $config['cType'],
-                    $element
-                );
-            }
+        foreach ($gridElements as $gridElement) {
+            $this->logData(
+                'Select where CType=gridelements_pi',
+                $gridElement
+            );
         }
 
         //$this->logData(print_r($gridElements, true));
