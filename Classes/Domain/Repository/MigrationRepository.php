@@ -160,6 +160,8 @@ class MigrationRepository extends Repository
             );
         }
 
+        $this->logData(print_r($gridElements, true));
+
         return $gridElements;
     }
 
@@ -947,25 +949,31 @@ class MigrationRepository extends Repository
      * @param $data
      * @return void
      */
-    public function logData($description, $data): void
+    public function logData($description, $data = null): void
     {
-        $this->logger->info(
-            $description,
-            [
-                'uid' => $data['uid'],
-                'pid' => $data['pid'],
-                'colPos' => $data['colPos'],
-                'backupColPos' => $data['backupColPos'],
-                'CType' => $data['CType'],
-                'tx_gridelements_backend_layout' => $data['tx_gridelements_backend_layout'],
-                'tx_gridelements_container' => $data['tx_gridelements_container'],
-                'tx_gridelements_columns' => $data['tx_gridelements_columns'],
-                'tx_gridelements_children' => $data['tx_gridelements_children'],
-                'tx_container_parent' => $data['tx_container_parent'],
-                'l18n_parent' => $data['l18n_parent'],
-                'sys_language_uid' => $data['sys_language_uid'],
-            ]
-        );
+        if ($data !== null) {
+            $this->logger->info(
+                $description,
+                [
+                    'uid' => $data['uid'],
+                    'pid' => $data['pid'],
+                    'colPos' => $data['colPos'],
+                    'backupColPos' => $data['backupColPos'],
+                    'CType' => $data['CType'],
+                    'tx_gridelements_backend_layout' => $data['tx_gridelements_backend_layout'],
+                    'tx_gridelements_container' => $data['tx_gridelements_container'],
+                    'tx_gridelements_columns' => $data['tx_gridelements_columns'],
+                    'tx_gridelements_children' => $data['tx_gridelements_children'],
+                    'tx_container_parent' => $data['tx_container_parent'],
+                    'l18n_parent' => $data['l18n_parent'],
+                    'sys_language_uid' => $data['sys_language_uid'],
+                ]
+            );
+        } else {
+            $this->logger->info(
+                $description
+            );
+        }
     }
 
     /**
