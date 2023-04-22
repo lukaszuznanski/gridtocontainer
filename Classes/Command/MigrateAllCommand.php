@@ -31,7 +31,7 @@ class MigrateAllCommand extends Command
      */
     protected function configure(): void
     {
-        $this->setHelp('Migrate gridelements to container.' . LF . 'You must have registered the EXT:container elements before! And please make a backup from your database before start the migration' . LF . 'This function migrates all gridelements and content elements with the selected gridelements-layout keys. Not tested is a migration of nested grid elements');
+        $this->setHelp('Migrate gridelements to container');
     }
 
     /**
