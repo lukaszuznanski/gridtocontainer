@@ -151,6 +151,7 @@ class MigrationRepository extends Repository
                             ->set('colPos', $colPos)
                             ->execute();
 
+                        $queryBuilder = $this->getQueryBuilder();
                         $queryBuilder->update($this->table)
                             ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
                             ->set('tx_container_parent', $txContainerParent)
