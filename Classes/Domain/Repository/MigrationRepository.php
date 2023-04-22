@@ -37,7 +37,8 @@ use \TYPO3\CMS\Core\Log\Writer\FileWriter;
 * pole pakietu gridelements, przechowuje id columny children
 *
 * tx_gridelements_backend_layout (używane w czasie migracji elementów grid, nie używane w czasie migracji contentu)
-* pole b13/container, przechowuje konfigurację nazwy pole np. 1-1, 1-2_1-2, 1-3_1-3_1-3
+* gridelements przechowuje konfigurację nazwy pole np. 1-1, 1-2_1-2, 1-3_1-3_1-3*
+ * b13/container nie korzysta z tegp pola
 *
 * tx_container_parent
 * pole pakietu b13/container - przechowuje ID columny parent z konfiguracji pakietu
@@ -149,7 +150,7 @@ class MigrationRepository extends Repository
                 $queryBuilder = $this->getQueryBuilder();
                 $queryBuilder->update($this->table)
                     ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
-                    ->set('CType', $config['cType'])
+                    ->set('CType', $gridElement['tx_gridelements_backend_layout'])
                     ->execute();
 
                 $queryBuilder = $this->getQueryBuilder();
