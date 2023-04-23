@@ -2,17 +2,6 @@
 
 namespace SBublies\Gridtocontainer\Command;
 
-/***
- *
- * This file is part of the "Gridtocontainer" Extension for TYPO3 CMS.
- *
- * For the full copyright and license information, please read the
- * LICENSE.txt file that was distributed with this source code.
- *
- *  (c) 2022 by Stefan Bublies <project@sbublies.de>
- *
- ***/
-
 use Doctrine\DBAL\DBALException;
 use SBublies\Gridtocontainer\Domain\Repository\MigrationRepository;
 use Symfony\Component\Console\Command\Command;
@@ -25,17 +14,12 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class FixColPosErrorsCommand extends Command
 {
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
     protected function configure(): void
     {
-        $this->setHelp('Fix colPos < 0 in tt_content');
+        $this->setHelp('Fix colPos in tt_content');
     }
 
     /**
-     * Executes the command to migrate the elements
-     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int error code
@@ -46,7 +30,7 @@ class FixColPosErrorsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->writeln('Fix colPos < 0 in tt_content starts now');
+        $io->writeln('Fix colPos in tt_content starts now');
 
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         $migrationRepository = $objectManager->get(MigrationRepository::class);
@@ -54,11 +38,11 @@ class FixColPosErrorsCommand extends Command
         $migrateAll = $migrationRepository->fixColPosErrors();
 
         if ($migrateAll) {
-            $io->writeln('Fix colPos < 0 in tt_content is completed');
+            $io->writeln('Fix colPos in tt_content is completed');
             return 0;
         }
 
-        $io->writeln('Fix colPos < 0 in tt_content is failed');
+        $io->writeln('Fix colPos in tt_content is failed');
         return 1;
     }
 }

@@ -86,25 +86,16 @@ class MigrationRepository extends Repository
     {
         $this->logData('Start updateAllElements');
 
+        // fix colPos for grids elements befor run migrate
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->update($this->table)
+            ->where($queryBuilder->expr()->gt('tx_gridelements_container', $queryBuilder->createNamedParameter(0)))
+            ->set('colPos', -1)
+            ->execute();
+
         $configs = $this->getConfigs();
         $gridElements = $this->getGridsContainerElements($configs);
         $contentElements = $this->getGridsContainerContents($gridElements);
-
-        /**
-        ['contentList'] => Array
-            // key = grid element uid
-            [98543] => Array
-                [
-                    // key = colPos int
-                    [1] => Array
-                        // contents list from grid element
-                        [
-                            // content from grid element
-                            [0] => Array
-                                [
-                                    [uid] => 98541
-                                    [pid] => 12895
-         */
 
         // update content elements
         foreach ($configs as $config) {
@@ -629,11 +620,7 @@ class MigrationRepository extends Repository
     public function fixColPosErrors(): bool
     {
         $this->logger->info('Start fixColPosErrors');
-        $this->logColPosErrors();
-        //$this->removeColPosErrorsRows();
-        //$this->logColPosErrors();
         $this->removeAllColPosErrors();
-        $this->logColPosErrors();
         $this->logger->info('End fixColPosErrors');
         return true;
     }
