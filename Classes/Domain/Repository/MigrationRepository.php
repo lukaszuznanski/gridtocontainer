@@ -729,7 +729,7 @@ class MigrationRepository extends Repository
                     )
                     ->from($this->table)
                     ->where(
-                        $queryBuilder->expr()->eq('tx_gridelements_scolumns', $queryBuilder->createNamedParameter($gridElement['uid']))
+                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($gridElement['uid']))
                     )
                     ->execute()
                     ->fetchAllAssociative();
