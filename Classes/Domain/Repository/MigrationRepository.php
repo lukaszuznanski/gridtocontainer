@@ -435,8 +435,13 @@ class MigrationRepository extends Repository
         }
 
         foreach ($contentsToRemove as $contentToRemove) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->delete($this->tableContent)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentToRemove['uid'])))
+                ->execute();
+
             $this->logData(
-                'Content to remove',
+                'Content removed',
                 $contentToRemove
             );
         }
