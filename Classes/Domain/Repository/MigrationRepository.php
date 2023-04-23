@@ -349,19 +349,20 @@ class MigrationRepository extends Repository
                     continue;
                 }
 
-
                 // check if element is translation
                 if ((int)$content['sys_language_uid'] === 0) {
                     // element is not translation
                     // check if parent grid element exists
-                    if ($this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']) !== false) {
+                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+                    if ($parentElementKeys !== false) {
                         // parent element exists
                         continue;
                     }
                 } else {
                     // element is translation
                     // check if parent grid element exists
-                    if ($this->searchElement($page['contents'], 'uid', $content['l18n_parent']) !== false) {
+                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['l18n_parent']);
+                    if ($parentElementKeys !== false) {
                         // parent element exists
                         continue;
                     }
@@ -373,8 +374,17 @@ class MigrationRepository extends Repository
 
                 // check if content is grid element
                 if (str_contains($content['cType'], 'gridelements_pi')) {
-                    // search children elements to remove it
-                    $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
+
+                    // check if element is translation
+                    if ((int)$content['sys_language_uid'] === 0) {
+                        // element is not translation
+                        // check if parent grid element exists
+                        $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
+                    } else {
+                        // element is translation
+                        // check if parent grid element exists
+                        $childElementKeys = $this->searchElement($page['contents'], 'l18n_parent', $content['uid']);
+                    }
 
                     // children element not found
                     if ($childElementKeys === false) {
