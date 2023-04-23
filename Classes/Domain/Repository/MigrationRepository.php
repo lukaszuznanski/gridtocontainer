@@ -350,7 +350,7 @@ class MigrationRepository extends Repository
                 }
 
                 // check if element is translation
-                if ((int)$content['sys_language_uid'] === 0) {
+                if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
                     // element is not translation
                     // check if parent element exists
                     $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
@@ -373,7 +373,7 @@ class MigrationRepository extends Repository
                 if (str_contains($content['cType'], 'gridelements_pi')) {
 
                     // check if element is translation
-                    if ((int)$content['sys_language_uid'] === 0) {
+                    if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
                         // element is not translation
                         // check if parent grid element exists
                         $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
