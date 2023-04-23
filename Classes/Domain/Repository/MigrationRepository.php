@@ -712,8 +712,8 @@ class MigrationRepository extends Repository
 
                 // check if content is grid element
                 if (str_contains($content['cType'], 'gridelements_pi')) {
-                    // add children element to list for remove
-                    $childElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+                    // search children elements to remove it
+                    $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
 
                     if ($childElementKeys !== false) {
                         foreach ($childElementKeys as $childElementKey) {
