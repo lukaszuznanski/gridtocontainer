@@ -668,15 +668,13 @@ class MigrationRepository extends Repository
             )
             ->from($this->table)
             ->where(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)),
-                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
             )
             ->orWhere(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)),
-                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"'))
+                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2))
+            )
             ->orWhere(
-                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(1)),
-                $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
+                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(1))
             )
             ->execute()
             ->fetchAllAssociative();
@@ -705,8 +703,7 @@ class MigrationRepository extends Repository
                     )
                     ->from($this->table)
                     ->where(
-                        $queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($gridElement['uid'])),
-                        $queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0))
+                        $queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($gridElement['uid']))
                     )
                     ->execute()
                     ->fetchAllAssociative();
@@ -732,14 +729,11 @@ class MigrationRepository extends Repository
                     )
                     ->from($this->table)
                     ->where(
-                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($gridElement['uid'])),
-                        $queryBuilder->expr()->eq('sys_language_uid', $queryBuilder->createNamedParameter(0))
+                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($gridElement['uid']))
                     )
                     ->execute()
                     ->fetchAllAssociative();
             }
-
-
         }
 
         foreach ($gridElements as $gridElement) {
