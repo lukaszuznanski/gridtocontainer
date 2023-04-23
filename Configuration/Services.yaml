@@ -14,9 +14,9 @@ services:
         description: 'Update content'
         schedulable: false
 
-  SBublies\Gridtocontainer\Command\FixColPosErrorsCommand:
+  SBublies\Gridtocontainer\Command\FixGridElementsCommand:
     tags:
       - name: 'console.command'
-        command: 'gridtocontainer:fixcolposerrors'
+        command: 'gridtocontainer:fixgridelements'
         description: 'Update content'
         schedulable: false

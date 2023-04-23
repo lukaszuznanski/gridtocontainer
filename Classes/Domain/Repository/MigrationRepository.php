@@ -27,7 +27,7 @@ use \TYPO3\CMS\Core\Log\Writer\FileWriter;
 * colPos = id kolumny z konfiguracji np. 200, 201, 202, 203
 *
 * tx_gridelements_container
-* pole gridelements, przechowuje ID columny parent konfiguracji np. 0, 1, 2, 3
+* pole gridelements, przechowuje ID columny parent konfiguracji np. 0 jeżeli nie ma parent, 234221, 124123 ... 12312 jeżeli ma parent a wartość określa parent uid
 * domyślna migracja: tx_gridelements_container * 100 => tx_container_parent
 *
 * tx_gridelements_columns
@@ -61,7 +61,8 @@ use \TYPO3\CMS\Core\Log\Writer\FileWriter;
 */
 class MigrationRepository extends Repository
 {
-    protected string $table = 'tt_content';
+    protected string $tableContent = 'tt_content';
+    protected string $tablePage = 'pages';
     use LoggerAwareTrait;
 
     public function initializeObject(): void
@@ -88,7 +89,7 @@ class MigrationRepository extends Repository
 
         // fix colPos for grids elements befor run migrate
         $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder->update($this->table)
+        $queryBuilder->update($this->tableContent)
             ->where($queryBuilder->expr()->gt('tx_gridelements_container', $queryBuilder->createNamedParameter(0)))
             ->set('colPos', -1)
             ->execute();
@@ -135,20 +136,20 @@ class MigrationRepository extends Repository
 
                             if ($txContainerParent === null) {
                                 $this->logData(
-                                    'Update Grids Contents ' . $this->table . ' whare UID=' . $contentElement['uid'] . ' is NULL',
+                                    'Update Grids Contents ' . $this->tableContent . ' whare UID=' . $contentElement['uid'] . ' is NULL',
                                     $contentElement
                                 );
                                 continue;
                             }
 
                             $queryBuilder = $this->getQueryBuilder();
-                            $queryBuilder->update($this->table)
+                            $queryBuilder->update($this->tableContent)
                                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
                                 ->set('colPos', $colPos)
                                 ->execute();
 
                             $queryBuilder = $this->getQueryBuilder();
-                            $queryBuilder->update($this->table)
+                            $queryBuilder->update($this->tableContent)
                                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentElement['uid'])))
                                 ->set('tx_container_parent', $txContainerParent)
                                 ->execute();
@@ -157,7 +158,7 @@ class MigrationRepository extends Repository
                             $contentElement['tx_container_parent'] = $txContainerParent;
 
                             $this->logData(
-                                'Update Grids Contents ' . $this->table . ' whare UID=' . $contentElement['uid'],
+                                'Update Grids Contents ' . $this->tableContent . ' whare UID=' . $contentElement['uid'],
                                 $contentElement
                             );
                         }
@@ -170,13 +171,13 @@ class MigrationRepository extends Repository
         foreach ($gridElements as $gridElement) {
 
             $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->update($this->table)
+            $queryBuilder->update($this->tableContent)
                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
                 ->set('CType', $gridElement['tx_gridelements_backend_layout'])
                 ->execute();
 
             $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->update($this->table)
+            $queryBuilder->update($this->tableContent)
                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
                 ->set('pi_flexform', $gridElement['pi_flexform'])
                 ->execute();
@@ -184,7 +185,7 @@ class MigrationRepository extends Repository
             $gridElement['CType'] = $gridElement['tx_gridelements_backend_layout'];
 
             $this->logData(
-                'Update Grids Elements ' . $this->table . ' whare UID=' . $gridElement['uid'],
+                'Update Grids Elements ' . $this->tableContent . ' whare UID=' . $gridElement['uid'],
                 $gridElement
             );
         }
@@ -224,7 +225,7 @@ class MigrationRepository extends Repository
                 'pi_flexform',
                 'sys_language_uid ',
             )
-            ->from($this->table)
+            ->from($this->tableContent)
             ->where(
                 $queryBuilder->expr()->like('CType', '"%gridelements_pi%"')
             )
@@ -314,7 +315,7 @@ class MigrationRepository extends Repository
                     'pi_flexform',
                     'sys_language_uid ',
                 )
-                ->from($this->table)
+                ->from($this->tableContent)
                 ->where(
                     $queryBuilder->expr()->eq('tx_gridelements_container', $gridElement['uid'])
                 )
@@ -626,6 +627,85 @@ class MigrationRepository extends Repository
     }
 
     /**
+     * @return true
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function fixGridElements()
+    {
+        $this->logger->info('Start - fixGridElements');
+
+        // get all pages
+        $queryBuilder = $this->getQueryBuilder();
+        $pages = $queryBuilder
+            ->select(
+                'uid'
+            )
+            ->from($this->tablePage)
+            ->execute()
+            ->fetchAllAssociative();
+
+        foreach ($pages as $num => $page) {
+
+            // get all content for page
+            $queryBuilder = $this->getQueryBuilder();
+            $pages[$num]['contents'] = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'CType',
+                    'tx_container_parent',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_container',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_children',
+                    'l18n_parent',
+                    'sys_language_uid',
+                    'hidden',
+                    'deleted',
+                )
+                ->from($this->tableContent)
+                ->where(
+                    $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($page['uid']))
+                )
+                ->execute()
+                ->fetchAllAssociative();
+        }
+
+        $this->logData(print_r($pages, true));
+/*
+        // pages list
+        foreach ($pages as $num => $page) {
+            // contents list
+            foreach ($page as $contents) {
+                // content
+                foreach ($contents as $content) {
+                    // check if content is grid element
+                    if (str_contains($content['cType'], 'gridelements_pi')) {
+                        // element if grid element
+
+                    } else {
+                        // element is not grid element
+                        // check if element is in root position
+                        if ((int)$content['colPos'] === 0 && (int)$content['tx_gridelements_container'] === 0) {
+                            // element is in root position
+                            continue;
+                        } else {
+                            // element is not in root position
+                            // check if parent grid element exists
+
+                        }
+                    }
+                    // check if content have parent
+                }
+            }
+        }
+*/
+        return true;
+    }
+
+    /**
      * @return bool
      * @throws DBALException
      * @throws Exception
@@ -653,7 +733,7 @@ class MigrationRepository extends Repository
                 'deleted',
                 'header',
             )
-            ->from($this->table)
+            ->from($this->tableContent)
             ->where(
                 $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
             )
@@ -693,7 +773,7 @@ class MigrationRepository extends Repository
                     'deleted',
                     'header',
                 )
-                ->from($this->table)
+                ->from($this->tableContent)
                 ->where(
                     $queryBuilder->expr()->eq($fieldName, $queryBuilder->createNamedParameter($element['uid']))
                 )
@@ -707,7 +787,7 @@ class MigrationRepository extends Repository
 
         foreach ($elements as $element) {
             $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->delete($this->table)
+            $queryBuilder->delete($this->tableContent)
                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
                 ->execute();
 
@@ -736,7 +816,7 @@ class MigrationRepository extends Repository
                 'deleted',
                 'header',
             )
-            ->from($this->table)
+            ->from($this->tableContent)
             ->where(
                 $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
             )
@@ -748,7 +828,7 @@ class MigrationRepository extends Repository
 
         foreach ($elements as $element) {
             $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->delete($this->table)
+            $queryBuilder->delete($this->tableContent)
                 ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
                 ->execute();
 
@@ -790,7 +870,7 @@ class MigrationRepository extends Repository
                 'deleted',
                 'header',
             )
-            ->from($this->table)
+            ->from($this->tableContent)
             ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
             ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
             ->execute()
@@ -822,13 +902,10 @@ class MigrationRepository extends Repository
                     'uid' => $data['uid'],
                     'pid' => $data['pid'],
                     'colPos' => $data['colPos'],
-                    'backupColPos' => $data['backupColPos'],
                     'CType' => $data['CType'],
                     'tx_gridelements_backend_layout' => $data['tx_gridelements_backend_layout'],
                     'tx_gridelements_container' => $data['tx_gridelements_container'],
                     'tx_gridelements_columns' => $data['tx_gridelements_columns'],
-                    'tx_gridelements_children' => $data['tx_gridelements_children'],
-                    'tx_container_parent' => $data['tx_container_parent'],
                     'l18n_parent' => $data['l18n_parent'],
                     'sys_language_uid' => $data['sys_language_uid'],
                 ]
@@ -845,7 +922,7 @@ class MigrationRepository extends Repository
      */
     protected function getQueryBuilder(): QueryBuilder
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->tableContent);
         $queryBuilder->getRestrictions()->removeAll();
         return $queryBuilder;
     }

@@ -12,7 +12,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 
-class FixColPosErrorsCommand extends Command
+class FixGridElementsCommand extends Command
 {
     protected function configure(): void
     {
@@ -35,7 +35,7 @@ class FixColPosErrorsCommand extends Command
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         $migrationRepository = $objectManager->get(MigrationRepository::class);
 
-        $migrateAll = $migrationRepository->fixColPosErrors();
+        $migrateAll = $migrationRepository->fixGridElements();
 
         if ($migrateAll) {
             $io->writeln('Fix colPos in tt_content is completed');
