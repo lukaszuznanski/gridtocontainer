@@ -635,7 +635,7 @@ class MigrationRepository extends Repository
         $this->logger->info('Start - removeAllColPosErrors');
 
         $queryBuilder = $this->getQueryBuilder();
-        $gridElements = $queryBuilder
+        $elements = $queryBuilder
             ->select(
                 'uid',
                 'pid',
@@ -666,89 +666,59 @@ class MigrationRepository extends Repository
             ->execute()
             ->fetchAllAssociative();
 
-        $children = [];
-        foreach ($gridElements as $gridElement) {
-            if ((int)$gridElement['sys_language_uid'] > 0 && isset($gridElement['l18n_parent']) && (int)$gridElement['l18n_parent'] > 0) {
-                $queryBuilder = $this->getQueryBuilder();
-                $children[$gridElement['uid']] = $queryBuilder
-                    ->select(
-                        'uid',
-                        'pid',
-                        'colPos',
-                        'backupColPos',
-                        'CType',
-                        'tx_container_parent',
-                        'tx_gridelements_columns',
-                        'tx_gridelements_container',
-                        'tx_gridelements_backend_layout',
-                        'tx_gridelements_children',
-                        'l18n_parent',
-                        'sys_language_uid',
-                        'hidden',
-                        'deleted',
-                        'header',
-                    )
-                    ->from($this->table)
-                    ->where(
-                        $queryBuilder->expr()->eq('l18n_parent', $queryBuilder->createNamedParameter($gridElement['uid']))
-                    )
-                    ->execute()
-                    ->fetchAllAssociative();
+        foreach ($elements as $element) {
+
+            if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
+                $fieldName = 'l18n_parent';
             } else {
-                $queryBuilder = $this->getQueryBuilder();
-                $children[$gridElement['uid']] = $queryBuilder
-                    ->select(
-                        'uid',
-                        'pid',
-                        'colPos',
-                        'backupColPos',
-                        'CType',
-                        'tx_container_parent',
-                        'tx_gridelements_columns',
-                        'tx_gridelements_container',
-                        'tx_gridelements_backend_layout',
-                        'tx_gridelements_children',
-                        'l18n_parent',
-                        'sys_language_uid',
-                        'hidden',
-                        'deleted',
-                        'header',
-                    )
-                    ->from($this->table)
-                    ->where(
-                        $queryBuilder->expr()->eq('tx_gridelements_columns', $queryBuilder->createNamedParameter($gridElement['uid']))
-                    )
-                    ->execute()
-                    ->fetchAllAssociative();
+                $fieldName = 'tx_gridelements_container';
+            }
+
+            $queryBuilder = $this->getQueryBuilder();
+            $children = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'backupColPos',
+                    'CType',
+                    'tx_container_parent',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_container',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_children',
+                    'l18n_parent',
+                    'sys_language_uid',
+                    'hidden',
+                    'deleted',
+                    'header',
+                )
+                ->from($this->table)
+                ->where(
+                    $queryBuilder->expr()->eq($fieldName, $queryBuilder->createNamedParameter($element['uid']))
+                )
+                ->execute()
+                ->fetchAllAssociative();
+
+            foreach ($children as $child) {
+                $elements[] = $child;
             }
         }
 
-        foreach ($gridElements as $gridElement) {
+        foreach ($elements as $element) {
             $queryBuilder = $this->getQueryBuilder();
             $queryBuilder->delete($this->table)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
                 ->execute();
 
             $this->logData(
-                'Remove colPos Errors id=' . $gridElement['uid'],
-                $gridElement
+                'Remove colPos Errors id=' . $element['uid'],
+                $element
             );
-
-            foreach ($children[$gridElement['uid']] as $child) {
-                $queryBuilder = $this->getQueryBuilder();
-                $queryBuilder->delete($this->table)
-                    ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($child['uid'])))
-                    ->execute();
-
-                $this->logData(
-                    'Remove child colPos Errors id=' . $child['uid'],
-                    $child
-                );
-            }
         }
 
         $queryBuilder = $this->getQueryBuilder();
-        $gridElements = $queryBuilder
+        $elements = $queryBuilder
             ->select(
                 'uid',
                 'pid',
@@ -776,15 +746,15 @@ class MigrationRepository extends Repository
             ->execute()
             ->fetchAllAssociative();
 
-        foreach ($gridElements as $gridElement) {
+        foreach ($elements as $element) {
             $queryBuilder = $this->getQueryBuilder();
             $queryBuilder->delete($this->table)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
                 ->execute();
 
             $this->logData(
-                'Remove child colPos Errors id=' . $gridElement['uid'],
-                $gridElement
+                'Remove other colPos Errors id=' . $element['uid'],
+                $element
             );
         }
 
