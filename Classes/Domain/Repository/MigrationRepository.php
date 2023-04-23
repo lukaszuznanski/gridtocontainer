@@ -673,36 +673,86 @@ class MigrationRepository extends Repository
                 ->fetchAllAssociative();
         }
 
-        $this->logData(print_r($pages, true));
-/*
+        // $this->logData(print_r($pages, true));
+
+        $contentsToRemove = [];
+
         // pages list
-        foreach ($pages as $num => $page) {
+        foreach ($pages as $pageKey => $page) {
+
             // contents list
-            foreach ($page as $contents) {
+            // $pages[$pageKey]['uid'] => page id (int)
+            // $pages[$pageKey]['contents'] => contents (array)
+            foreach ($page['contents'] as $contentKey => $content) {
+
                 // content
-                foreach ($contents as $content) {
-                    // check if content is grid element
-                    if (str_contains($content['cType'], 'gridelements_pi')) {
-                        // element if grid element
+                // $pages[$pageKey]['contents'][$contentKey] => content (array)
+                // $pages[$pageKey]['contents'][$contentKey]['uid'] => content id (int)
+                // $pages[$pageKey]['contents'][$contentKey]['pid'] => page id (int)
+                // $pages[$pageKey]['contents'][$contentKey]['colPos'] => page id (int)
+                // ...
 
-                    } else {
-                        // element is not grid element
-                        // check if element is in root position
-                        if ((int)$content['colPos'] === 0 && (int)$content['tx_gridelements_container'] === 0) {
-                            // element is in root position
-                            continue;
-                        } else {
-                            // element is not in root position
-                            // check if parent grid element exists
+                // element is not grid element
+                // check if element is in root position
+                if ((int)$content['colPos'] === 0 && (int)$content['tx_gridelements_container'] === 0) {
+                    // element is in root position
+                    continue;
+                }
 
+                // element is not in root position
+                // check if parent grid element exists
+                if ($this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']) !== false) {
+                    // parent element exists
+                    continue;
+                }
+
+                // parent element not exists
+                // add element to list for remove it
+                $contentsToRemove[] = $content;
+
+                // check if content is grid element
+                if (str_contains($content['cType'], 'gridelements_pi')) {
+                    // add children element to list for remove
+                    $childElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+
+                    if ($childElementKeys !== false) {
+                        foreach ($childElementKeys as $childElementKey) {
+                            // add child element to list for remove it
+                            $contentsToRemove[] = $page['contents'][$childElementKey];
                         }
                     }
-                    // check if content have parent
                 }
             }
         }
-*/
+
+        foreach ($contentsToRemove as $contentToRemove) {
+            $this->logData(
+                'Content to remove',
+                $contentToRemove
+            );
+        }
+
         return true;
+    }
+
+    /**
+     * @param $elements
+     * @param $column
+     * @param $value
+     * @return array|false
+     */
+    public function searchElement($elements, $column, $value)
+    {
+        $foundKeys = [];
+        foreach($elements as $key => $element) {
+            if ((string)$element[$column] === (string)$value) {
+                $foundKeys[] = $key;
+            }
+        }
+        if (count($foundKeys) > 0) {
+            return $foundKeys;
+        }
+        return false;
     }
 
     /**
