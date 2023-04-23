@@ -78,6 +78,7 @@ class MigrationRepository extends Repository
         $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
     }
 
+
     /**
      * @return bool
      * @throws DBALException
@@ -87,7 +88,7 @@ class MigrationRepository extends Repository
     {
         $this->logData('Start updateAllElements');
 
-        // fix colPos for grids elements befor run migrate
+        // fix colPos (set to -1)
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->update($this->tableContent)
             ->where($queryBuilder->expr()->gt('tx_gridelements_container', $queryBuilder->createNamedParameter(0)))
@@ -97,8 +98,44 @@ class MigrationRepository extends Repository
         $configs = $this->getConfigs();
         $gridElements = $this->getGridsContainerElements($configs);
         $contentElements = $this->getGridsContainerContents($gridElements);
+        $this->updateContentElements($configs, $contentElements);
+        $this->updateGridElements($gridElements);
+        $this->logData('End updateAllElements');
+        return true;
+    }
 
-        // update content elements
+    protected function updateGridElements($gridElements): void
+    {
+        foreach ($gridElements as $gridElement) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->update($this->tableContent)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
+                ->set('CType', $gridElement['tx_gridelements_backend_layout'])
+                ->execute();
+
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->update($this->tableContent)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
+                ->set('pi_flexform', $gridElement['pi_flexform'])
+                ->execute();
+
+            $gridElement['CType'] = $gridElement['tx_gridelements_backend_layout'];
+
+            $this->logData(
+                'Update Grids Elements ' . $this->tableContent . ' whare UID=' . $gridElement['uid'],
+                $gridElement
+            );
+        }
+    }
+
+    /**
+     * @param $configs
+     * @param $contentElements
+     * @return void
+     * @throws DBALException
+     */
+    protected function updateContentElements($configs, $contentElements): void
+    {
         foreach ($configs as $config) {
             foreach ($config['colPos'] as $configColPos) {
                 foreach ($contentElements['contentList'] as $gridElementUid => $colPosList) {
@@ -122,7 +159,8 @@ class MigrationRepository extends Repository
 
                             if ((int)$contentElement['sys_language_uid'] > 0 && $colPos === 0) {
                                 $txContainerParent = 0;
-                            } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent']) && (int)$contentElement['l18n_parent'] > 0) {
+                            } else if ((int)$contentElement['sys_language_uid'] > 0 && isset($contentElement['l18n_parent'])
+                                && (int)$contentElement['l18n_parent'] > 0) {
                                 $txContainerParent = $contentElements['parentsList'][$contentElement['l18n_parent']];
                             } else if ($colPos === 0) {
                                 $txContainerParent = $contentElement['tx_gridelements_container'];
@@ -166,33 +204,6 @@ class MigrationRepository extends Repository
                 }
             }
         }
-
-        // update grids elements
-        foreach ($gridElements as $gridElement) {
-
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->update($this->tableContent)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
-                ->set('CType', $gridElement['tx_gridelements_backend_layout'])
-                ->execute();
-
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->update($this->tableContent)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($gridElement['uid'])))
-                ->set('pi_flexform', $gridElement['pi_flexform'])
-                ->execute();
-
-            $gridElement['CType'] = $gridElement['tx_gridelements_backend_layout'];
-
-            $this->logData(
-                'Update Grids Elements ' . $this->tableContent . ' whare UID=' . $gridElement['uid'],
-                $gridElement
-            );
-        }
-
-        $this->logData('End updateAllElements');
-
-        return true;
     }
 
     /**
@@ -204,7 +215,6 @@ class MigrationRepository extends Repository
     public function getGridsContainerElements($configs): array
     {
         $this->logData('Start getGridsContainerElements');
-
         $queryBuilder = $this->getQueryBuilder();
         $gridElements = $queryBuilder
             ->select(
@@ -239,47 +249,7 @@ class MigrationRepository extends Repository
             );
         }
 
-        //$this->logData(print_r($gridElements, true));
-
-        /**
-         [
-            [0] => Array
-                [
-                    [uid] => 98535
-                    [pid] => 12233
-                    [colPos] => 0
-                    [CType] => gridelements_pi1
-                    [tx_gridelements_backend_layout] => fullwidthcompontent
-                    [tx_gridelements_container] => 0
-                    [tx_gridelements_columns] => 0
-                    [tx_gridelements_children] => 1
-                    [tx_container_parent] => 0
-                    [l18n_parent] => 0
-                    [pi_flexform] => 'string'
-                    [sys_language_uid] => 0
-                ]
-
-            [1] => Array
-                [
-                    [uid] => 98543
-                    [pid] => 12895
-                    [colPos] => 0
-                    [backupColPos] => -2
-                    [CType] => gridelements_pi1
-                    [tx_gridelements_backend_layout] => 1-1
-                    [tx_gridelements_container] => 0
-                    [tx_gridelements_columns] => 0
-                    [tx_gridelements_children] => 2
-                    [tx_container_parent] => 0
-                    [l18n_parent] => 89961
-                    [pi_flexform] => 'string'
-                    [sys_language_uid] => 17
-                ]
-         ]
-        **/
-
         $this->logData('End getGridsContainerElements');
-
         return $gridElements;
     }
 
@@ -347,283 +317,8 @@ class MigrationRepository extends Repository
             }
         }
 
-        //$this->logData(print_r($contentElementsResult, true));
-
-        /**
-        ['parentsList'] => Array
-            [
-                // 'content uid' => parent element uid
-                '98543' => 12132 (parent element uid)
-                '98544' => 12132 (parent element uid)
-                '98545' => 12132 (parent element uid)
-            ]
-        ['contentList'] => Array
-            // key = grid element uid
-            [98543] => Array
-                [
-                    // key = colPos int
-                    [1] => Array
-                        // contents list from grid element
-                        [
-                            // content from grid element
-                            [0] => Array
-                                [
-                                    [uid] => 98541
-                                    [pid] => 12895
-                                    [colPos] => -1
-                                    [backupColPos] => -2
-                                    [CType] => gridelements_pi1
-                                    [tx_gridelements_backend_layout] => 1-2_1-2
-                                    [tx_gridelements_container] => 98543
-                                    [tx_gridelements_columns] => 1
-                                    [tx_gridelements_children] => 2
-                                    [tx_container_parent] => 0
-                                    [l18n_parent] => 89959
-                                    [hidden] => 0
-                                    [deleted] => 0
-                                    [header] =>
-                                    [pi_flexform] =>
-                                    [sys_language_uid] => 17
-                                ]
-                            // content from grid element
-                            [1] => Array
-                                [
-                                    [uid] => 98542
-                                    [pid] => 12895
-                                    [colPos] => -1
-                                    [backupColPos] => -2
-                                    [CType] => header
-                                    [tx_gridelements_backend_layout] => 0
-                                    [tx_gridelements_container] => 98543
-                                    [tx_gridelements_columns] => 0
-                                    [tx_gridelements_children] => 0
-                                    [tx_container_parent] => 0
-                                    [l18n_parent] => 89960
-                                    [hidden] => 0
-                                    [deleted] => 0
-                                    [header] => LEARNING POWERED BY NAVIO
-                                    [pi_flexform] =>
-                                    [sys_language_uid] => 17
-                                ]
-                        ]
-                    // key = colPos int
-                    [0] => Array
-                        [
-                            // content from grid element
-                            [0] => Array
-                                [
-                                    [uid] => 98541
-                                    [pid] => 12895
-                                    [colPos] => -1
-                                    [backupColPos] => -2
-                                    [CType] => gridelements_pi1
-                                    [tx_gridelements_backend_layout] => 1-2_1-2
-                                    [tx_gridelements_container] => 98543
-                                    [tx_gridelements_columns] => 1
-                                    [tx_gridelements_children] => 2
-                                    [tx_container_parent] => 0
-                                    [l18n_parent] => 89959
-                                    [hidden] => 0
-                                    [deleted] => 0
-                                    [header] =>
-                                    [pi_flexform] =>
-                                    [sys_language_uid] => 17
-                                ]
-                            // content from grid element
-                            [1] => Array
-                                [
-                                    [uid] => 98542
-                                    [pid] => 12895
-                                    [colPos] => -1
-                                    [backupColPos] => -2
-                                    [CType] => header
-                                    [tx_gridelements_backend_layout] => 0
-                                    [tx_gridelements_container] => 98543
-                                    [tx_gridelements_columns] => 0
-                                    [tx_gridelements_children] => 0
-                                    [tx_container_parent] => 0
-                                    [l18n_parent] => 89960
-                                    [hidden] => 0
-                                    [deleted] => 0
-                                    [header] => LEARNING POWERED BY NAVIO
-                                    [pi_flexform] =>
-                                    [sys_language_uid] => 17
-                                ]
-                        ]
-                ]
-        */
-
         $this->logData('End getGridsContainerContents');
-
         return $contentElementsResult;
-    }
-
-    /**
-     * @return array[]
-     */
-    public function getConfigs(): array
-    {
-        return [
-            [
-                'cType' => 'fullwidthcompontent',   // cType / grid element type / b13/container type
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,         // grid element colPos
-                        'containerColPos' => 200,  // b13/container colPos
-                    ],
-                    [
-                        'gridColPos' => 1,         // grid element colPos
-                        'containerColPos' => 201,  // b13/container colPos
-                    ],
-                ]
-            ],
-            [
-                'cType' => '1-2_1-2',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-4_3-4',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-4_1-4_1-2',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                    [
-                        'gridColPos' => 2,
-                        'containerColPos' => 202,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-2_1-4_1-4',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                    [
-                        'gridColPos' => 2,
-                        'containerColPos' => 202,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-1',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '3-4_1-4',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-3_1-3_1-3',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                    [
-                        'gridColPos' => 2,
-                        'containerColPos' => 202,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-4_1-4_1-4_1-4',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                    [
-                        'gridColPos' => 2,
-                        'containerColPos' => 202,
-                    ],
-                    [
-                        'gridColPos' => 3,
-                        'containerColPos' => 203,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-3_2-3',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @return bool
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function fixColPosErrors(): bool
-    {
-        $this->logger->info('Start fixColPosErrors');
-        $this->removeAllColPosErrors();
-        $this->logger->info('End fixColPosErrors');
-        return true;
     }
 
     /**
@@ -631,7 +326,7 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function fixGridElements()
+    public function removeUnusedElements(): bool
     {
         $this->logger->info('Start - fixGridElements');
 
@@ -747,26 +442,6 @@ class MigrationRepository extends Repository
         }
 
         return true;
-    }
-
-    /**
-     * @param $elements
-     * @param $column
-     * @param $value
-     * @return array|false
-     */
-    public function searchElement($elements, $column, $value)
-    {
-        $foundKeys = [];
-        foreach($elements as $key => $element) {
-            if (!empty($element[$column]) && (string)$element[$column] === (string)$value) {
-                $foundKeys[] = $key;
-            }
-        }
-        if (count($foundKeys) > 0) {
-            return $foundKeys;
-        }
-        return false;
     }
 
     /**
@@ -953,11 +628,186 @@ class MigrationRepository extends Repository
     }
 
     /**
+     * @return array[]
+     */
+    protected function getConfigs(): array
+    {
+        return [
+            [
+                'cType' => 'fullwidthcompontent',   // cType / grid element type / b13/container type
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,         // grid element colPos
+                        'containerColPos' => 200,  // b13/container colPos
+                    ],
+                    [
+                        'gridColPos' => 1,         // grid element colPos
+                        'containerColPos' => 201,  // b13/container colPos
+                    ],
+                ]
+            ],
+            [
+                'cType' => '1-2_1-2',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-4_3-4',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-4_1-4_1-2',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                    [
+                        'gridColPos' => 2,
+                        'containerColPos' => 202,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-2_1-4_1-4',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                    [
+                        'gridColPos' => 2,
+                        'containerColPos' => 202,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-1',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '3-4_1-4',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-3_1-3_1-3',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                    [
+                        'gridColPos' => 2,
+                        'containerColPos' => 202,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-4_1-4_1-4_1-4',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                    [
+                        'gridColPos' => 2,
+                        'containerColPos' => 202,
+                    ],
+                    [
+                        'gridColPos' => 3,
+                        'containerColPos' => 203,
+                    ],
+                ],
+            ],
+            [
+                'cType' => '1-3_2-3',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param $elements
+     * @param $column
+     * @param $value
+     * @return array|false
+     */
+    protected function searchElement($elements, $column, $value)
+    {
+        $foundKeys = [];
+        foreach($elements as $key => $element) {
+            if (!empty($element[$column]) && (string)$element[$column] === (string)$value) {
+                $foundKeys[] = $key;
+            }
+        }
+        if (count($foundKeys) > 0) {
+            return $foundKeys;
+        }
+        return false;
+    }
+
+    /**
      * @param $description
      * @param $data
      * @return void
      */
-    public function logData($description, $data = null): void
+    protected function logData($description, $data = null): void
     {
         if ($data !== null) {
             $this->logger->info(

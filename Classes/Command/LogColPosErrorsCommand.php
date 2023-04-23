@@ -2,17 +2,6 @@
 
 namespace SBublies\Gridtocontainer\Command;
 
-/***
- *
- * This file is part of the "Gridtocontainer" Extension for TYPO3 CMS.
- *
- * For the full copyright and license information, please read the
- * LICENSE.txt file that was distributed with this source code.
- *
- *  (c) 2022 by Stefan Bublies <project@sbublies.de>
- *
- ***/
-
 use Doctrine\DBAL\DBALException;
 use SBublies\Gridtocontainer\Domain\Repository\MigrationRepository;
 use Symfony\Component\Console\Command\Command;

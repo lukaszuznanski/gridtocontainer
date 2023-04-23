@@ -12,7 +12,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\Exception;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 
-class FixGridElementsCommand extends Command
+class RemoveUnusedElementsCommand extends Command
 {
     protected function configure(): void
     {
@@ -35,7 +35,7 @@ class FixGridElementsCommand extends Command
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         $migrationRepository = $objectManager->get(MigrationRepository::class);
 
-        $migrateAll = $migrationRepository->fixGridElements();
+        $migrateAll = $migrationRepository->removeUnusedElements();
 
         if ($migrateAll) {
             $io->writeln('Fix colPos in tt_content is completed');
