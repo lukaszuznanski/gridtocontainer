@@ -349,18 +349,22 @@ class MigrationRepository extends Repository
                     continue;
                 }
 
+                /*
                 // check if element is translation
-                if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
+                if ((int)$content['sys_language_uid'] === 0 && (int)$content['l18n_parent'] === 0) {
                     // element is not translation
                     // check if parent element exists
                     $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
-                } else {
+                } else if ((int)$content['sys_language_uid'] > 0 && (int)$content['l18n_parent'] > 0) {
                     // element is translation
                     // check if parent element exists
                     $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['l18n_parent']);
                 }
+                */
 
-                if ($parentElementKeys !== false) {
+                $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+
+                if ($parentElementKey !== false) {
                     // parent element exists
                     continue;
                 }
@@ -372,6 +376,7 @@ class MigrationRepository extends Repository
                 // check if content is grid element
                 if (str_contains($content['cType'], 'gridelements_pi')) {
 
+                    /*
                     // check if element is translation
                     if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
                         // element is not translation
@@ -382,6 +387,9 @@ class MigrationRepository extends Repository
                         // check if parent grid element exists
                         $childElementKeys = $this->searchElement($page['contents'], 'l18n_parent', $content['uid']);
                     }
+                    */
+
+                    $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
 
                     // children element not found
                     if ($childElementKeys === false) {
