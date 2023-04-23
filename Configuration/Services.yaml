@@ -17,6 +17,6 @@ services:
   SBublies\Gridtocontainer\Command\RemoveUnusedElementsCommand:
     tags:
       - name: 'console.command'
-        command: 'gridtocontainer:fixgridelements'
+        command: 'gridtocontainer:removeunusedelements'
         description: 'Update content'
         schedulable: false
