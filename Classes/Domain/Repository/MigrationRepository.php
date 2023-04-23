@@ -767,7 +767,7 @@ class MigrationRepository extends Repository
     {
         $foundKeys = [];
         foreach($elements as $key => $element) {
-            if ((string)$element[$column] === (string)$value) {
+            if ((string)$element[$column] === (string)$value && (int)$element['deleted'] === 0) {
                 $foundKeys[] = $key;
             }
         }
