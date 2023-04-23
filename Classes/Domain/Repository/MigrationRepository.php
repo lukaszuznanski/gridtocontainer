@@ -333,7 +333,7 @@ class MigrationRepository extends Repository
             // contents list
             // $pages[$pageKey]['uid'] => page id (int)
             // $pages[$pageKey]['contents'] => contents (array)
-            foreach ($page['contents'] as $contentKey => $content) {
+            foreach ($page['contents'] as $content) {
 
                 // content
                 // $pages[$pageKey]['contents'][$contentKey] => content (array)
@@ -352,20 +352,17 @@ class MigrationRepository extends Repository
                 // check if element is translation
                 if ((int)$content['sys_language_uid'] === 0) {
                     // element is not translation
-                    // check if parent grid element exists
+                    // check if parent element exists
                     $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
-                    if ($parentElementKeys !== false) {
-                        // parent element exists
-                        continue;
-                    }
                 } else {
                     // element is translation
-                    // check if parent grid element exists
+                    // check if parent element exists
                     $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['l18n_parent']);
-                    if ($parentElementKeys !== false) {
-                        // parent element exists
-                        continue;
-                    }
+                }
+
+                if ($parentElementKeys !== false) {
+                    // parent element exists
+                    continue;
                 }
 
                 // parent element not exists
@@ -762,7 +759,7 @@ class MigrationRepository extends Repository
     {
         $foundKeys = [];
         foreach($elements as $key => $element) {
-            if (!empty($element[$column]) && (string)$element[$column] === (string)$value) {
+            if ((string)$element[$column] === (string)$value) {
                 $foundKeys[] = $key;
             }
         }
