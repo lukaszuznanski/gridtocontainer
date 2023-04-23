@@ -110,7 +110,7 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function getGridsContainerElements($configs): array
+    protected function getGridsContainerElements($configs): array
     {
         $this->logData('Start getGridsContainerElements');
         $queryBuilder = $this->getQueryBuilder();
@@ -157,7 +157,7 @@ class MigrationRepository extends Repository
      * @throws DBALException
      * @throws Exception
      */
-    public function getGridsContainerContents($gridElements): array
+    protected function getGridsContainerContents($gridElements): array
     {
         $this->logData('Start getGridsContainerContents');
 

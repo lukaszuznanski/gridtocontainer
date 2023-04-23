@@ -30,7 +30,7 @@ class RemoveUnusedElementsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->writeln('Fix colPos in tt_content starts now');
+        $io->writeln('Remove Unused Contend elements from tt_content starts now');
 
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         $migrationRepository = $objectManager->get(MigrationRepository::class);
@@ -38,11 +38,11 @@ class RemoveUnusedElementsCommand extends Command
         $migrateAll = $migrationRepository->removeUnusedElements();
 
         if ($migrateAll) {
-            $io->writeln('Fix colPos in tt_content is completed');
+            $io->writeln('Remove Unused Contend elements from tt_content is completed');
             return 0;
         }
 
-        $io->writeln('Fix colPos in tt_content is failed');
+        $io->writeln('Remove Unused Contend elements from in tt_content is failed');
         return 1;
     }
 }
