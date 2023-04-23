@@ -14,51 +14,6 @@ use \TYPO3\CMS\Core\Log\LogManager;
 use \TYPO3\CMS\Core\Core\Environment;
 use \TYPO3\CMS\Core\Log\Writer\FileWriter;
 
-/**
- * The repository for Migration
- *
-* Struktura danych tabeli tt_content
-*
-* colPos
-* przechowuje ID columny w której jest osadzony rekord
-* gridelement ustawia -1 jeżeli:
-* gridelement ustawia -2 jeżeli:
-* jeżeli rekort jest osadzony w b13/container
-* colPos = id kolumny z konfiguracji np. 200, 201, 202, 203
-*
-* tx_gridelements_container
-* pole gridelements, przechowuje ID columny parent konfiguracji np. 0 jeżeli nie ma parent, 234221, 124123 ... 12312 jeżeli ma parent a wartość określa parent uid
-* domyślna migracja: tx_gridelements_container * 100 => tx_container_parent
-*
-* tx_gridelements_columns
-* pole pakietu gridelements, przechowuje ID columny z konfiguracji np. 0, 1, 2, 3
-* domyślna migracja: tx_gridelements_columns * 100 => colPos
-*
-* tx_gridelements_children (nie używane w czasie migracji)
-* pole pakietu gridelements, przechowuje id columny children
-*
-* tx_gridelements_backend_layout (używane w czasie migracji elementów grid, nie używane w czasie migracji contentu)
-* gridelements przechowuje konfigurację nazwy pole np. 1-1, 1-2_1-2, 1-3_1-3_1-3*
- * b13/container nie korzysta z tegp pola
-*
-* tx_container_parent
-* pole pakietu b13/container - przechowuje ID columny parent z konfiguracji pakietu
-* domyślna migracja: tx_gridelements_container * 100 => tx_container_parent
-*
-* sys_language_uid
-* pole z ID języka, jeżeli sys_language_uid > 0 to rekord jest tłumaczeniem
-* jeżeli rekord jest tłumaczeniem parent id jest przechowane w polu l18n_parent / l10n_parent
-*
-* l18n_parent / l10n_parent
-* służy do lokalizacji. Zawsze zawiera identyfikator rekordu w języku domyślnym
-* (nawet jeśli rekord został przetłumaczony z rekordu w języku innym niż domyślny)
-*
-* l10n_source
-* zawiera identyfikator ID rekordu używanego jako źródło tłumaczenia
-* niezależnie od tego, czy rekord został przetłumaczony w trybie wolnym, czy połączonym
-*
-* t3_origuid - wypełniane podczas kopiowania lub tłumaczenia rekordu i zawiera identyfikator rekordu źródłowego
-*/
 class MigrationRepository extends Repository
 {
     protected string $tableContent = 'tt_content';
@@ -373,7 +328,7 @@ class MigrationRepository extends Repository
         $contentsToRemove = [];
 
         // pages list
-        foreach ($pages as $pageKey => $page) {
+        foreach ($pages as $page) {
 
             // contents list
             // $pages[$pageKey]['uid'] => page id (int)
