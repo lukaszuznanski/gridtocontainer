@@ -699,11 +699,22 @@ class MigrationRepository extends Repository
                     continue;
                 }
 
-                // element is not in root position
-                // check if parent grid element exists
-                if ($this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']) !== false) {
-                    // parent element exists
-                    continue;
+
+                // check if element is translation
+                if ((int)$content['sys_language_uid'] === 0) {
+                    // element is not translation
+                    // check if parent grid element exists
+                    if ($this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']) !== false) {
+                        // parent element exists
+                        continue;
+                    }
+                } else {
+                    // element is translation
+                    // check if parent grid element exists
+                    if ($this->searchElement($page['contents'], 'uid', $content['l18n_parent']) !== false) {
+                        // parent element exists
+                        continue;
+                    }
                 }
 
                 // parent element not exists
@@ -715,11 +726,14 @@ class MigrationRepository extends Repository
                     // search children elements to remove it
                     $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
 
-                    if ($childElementKeys !== false) {
-                        foreach ($childElementKeys as $childElementKey) {
-                            // add child element to list for remove it
-                            $contentsToRemove[] = $page['contents'][$childElementKey];
-                        }
+                    // children element not found
+                    if ($childElementKeys === false) {
+                        continue;
+                    }
+
+                    foreach ($childElementKeys as $childElementKey) {
+                        // add child element to list for remove it
+                        $contentsToRemove[] = $page['contents'][$childElementKey];
                     }
                 }
             }
@@ -745,7 +759,7 @@ class MigrationRepository extends Repository
     {
         $foundKeys = [];
         foreach($elements as $key => $element) {
-            if ((string)$element[$column] === (string)$value) {
+            if (!empty($element[$column]) && (string)$element[$column] === (string)$value) {
                 $foundKeys[] = $key;
             }
         }
