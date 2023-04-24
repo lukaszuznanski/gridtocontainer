@@ -83,23 +83,22 @@ class MigrationRepository extends Repository
             foreach ($page['contents'] as $content) {
 
                 // check for broken grid element row
-                $contentBroken = false;
-                if (($content['tx_gridelements_backend_layout'] === null && str_contains($content['cType'], 'gridelements_pi'))
-                    || ($content['tx_gridelements_backend_layout'] !== null && !str_contains($content['cType'], 'gridelements_pi'))) {
-                    $contentBroken = true;
+                $contentIsBroken = false;
+                if (!empty($content['tx_gridelements_backend_layout']) && !str_contains($content['cType'], 'gridelements_pi')) {
+                    $contentIsBroken = true;
                     $contentsToRemove[] = $content;
                 }
 
                 if ((int)$content['colPos'] === 0
                     && (int)$content['tx_gridelements_container'] === 0
                     && (int)$content['deleted'] === 0
-                    && $contentBroken === false) {
+                    && !$contentIsBroken) {
                     continue;
                 }
 
                 $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
 
-                if ($parentElementKey !== false && $contentBroken === false) {
+                if ($parentElementKey !== false && !$contentIsBroken) {
                     continue;
                 }
 
@@ -110,7 +109,7 @@ class MigrationRepository extends Repository
 
                     $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
 
-                    if ($childElementKeys === false && $contentBroken === false) {
+                    if ($childElementKeys === false && !$contentIsBroken) {
                         continue;
                     }
 
