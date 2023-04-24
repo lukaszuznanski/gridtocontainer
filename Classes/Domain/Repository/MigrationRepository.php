@@ -81,15 +81,7 @@ class MigrationRepository extends Repository
         $contentsToRemove = [];
 
         foreach ($pages as $page) {
-            $runCount = 0;
-
             foreach ($page['contents'] as $content) {
-
-                if ($runCount > 3) {
-                    break;
-                }
-
-                $runCount++;
 
                 // check for broken grid element row
                 $contentIsBroken = false;
