@@ -93,7 +93,7 @@ class MigrationRepository extends Repository
 
                 // check for broken grid element row
                 $contentIsBroken = false;
-                if ((string)$content['tx_gridelements_backend_layout'] === '' && str_contains($content['CType'], 'gridelements_pi')) {
+                if (!empty($content['tx_gridelements_backend_layout']) && !str_contains($content['CType'], 'gridelements_pi')) {
                     $contentIsBroken = true;
                     $contentsToRemove[] = $content;
                 }
