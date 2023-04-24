@@ -91,7 +91,7 @@ class MigrationRepository extends Repository
         foreach ($pages as $page) {
             foreach ($page['contents'] as $content) {
 
-                // check for broken grid element row
+                // check for broken grid element
                 $contentIsBroken = false;
                 if (!empty($content['tx_gridelements_backend_layout']) && !str_contains($content['CType'], 'gridelements_pi')) {
                     $contentIsBroken = true;
