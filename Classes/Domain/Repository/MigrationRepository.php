@@ -19,7 +19,13 @@ class MigrationRepository extends Repository
 {
     protected string $tableContent = 'tt_content';
     protected string $tablePage = 'pages';
+    private ?ContentObjectRenderer $contentObject = null;
     use LoggerAwareTrait;
+
+    public function injectContentObjectRenderer(ContentObjectRenderer $contentObject): void
+    {
+        $this->contentObject = $contentObject;
+    }
 
     public function initializeObject(): void
     {
@@ -79,8 +85,7 @@ class MigrationRepository extends Repository
                 ->fetchAllAssociative();
         }
 
-        $unusedContentElements = $this->getUnusedContentElements();
-
+        //$unusedContentElements = $this->getUnusedContentElements();
         $contentsToRemove = [];
 
         foreach ($pages as $page) {
@@ -101,9 +106,10 @@ class MigrationRepository extends Repository
                 }
 
                 $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
-                $unusedElementKey = $this->searchElement($unusedContentElements, 'uid', $content['uid']);
+                //$unusedElementKey = $this->searchElement($unusedContentElements, 'uid', $content['uid']);
 
-                if ($parentElementKey !== false && $unusedElementKey !== false && !$contentIsBroken) {
+                //if ($parentElementKey !== false && $unusedElementKey !== false && !$contentIsBroken) {
+                if ($parentElementKey !== false && !$contentIsBroken) {
                     continue;
                 }
 
@@ -113,9 +119,10 @@ class MigrationRepository extends Repository
                 if (str_contains($content['CType'], 'gridelements_pi')) {
 
                     $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
-                    $unusedElementKey = $this->searchElement($unusedContentElements, 'uid', $content['uid']);
+                    //$unusedElementKey = $this->searchElement($unusedContentElements, 'uid', $content['uid']);
 
-                    if ($childElementKeys === false && $unusedElementKey === false) {
+                    //if ($childElementKeys === false && $unusedElementKey === false) {
+                    if ($childElementKeys === false) {
                         continue;
                     }
 
@@ -140,40 +147,6 @@ class MigrationRepository extends Repository
 
         return true;
     }
-
-    private ?ContentObjectRenderer $contentObject = null;
-
-    public function injectContentObjectRenderer(ContentObjectRenderer $contentObject): void
-    {
-        $this->contentObject = $contentObject;
-    }
-
-    /**
-     * @throws DBALException
-     * @throws Exception
-     */
-    protected function getUnusedContentElements(): array
-    {
-        $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder->select('uid', 'header')
-            ->from('tt_content');
-
-        $contentElements = $queryBuilder
-            ->execute()
-            ->fetchAllAssociative();
-
-        $usedElements = [];
-        foreach ($contentElements as $element) {
-            $elementUid = $element['uid'];
-            $content = $this->contentObject->getRecords('tt_content', $elementUid);
-            if (empty($content)) {
-                $usedElements[] = $element['uid'];
-            }
-        }
-
-        return $usedElements;
-    }
-
 
     /**
      * @return bool
@@ -242,6 +215,32 @@ class MigrationRepository extends Repository
 
         $this->logger->info('End logColPosErrors');
         return true;
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    protected function getUnusedContentElements(): array
+    {
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->select('uid', 'header')
+            ->from('tt_content');
+
+        $contentElements = $queryBuilder
+            ->execute()
+            ->fetchAllAssociative();
+
+        $usedElements = [];
+        foreach ($contentElements as $element) {
+            $elementUid = $element['uid'];
+            $content = $this->contentObject->getRecords('tt_content', ['uid' => $elementUid]);
+            if (empty($content)) {
+                $usedElements[] = $element['uid'];
+            }
+        }
+
+        return $usedElements;
     }
 
     /**
