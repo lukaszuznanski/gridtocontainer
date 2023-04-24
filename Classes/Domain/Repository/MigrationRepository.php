@@ -34,6 +34,125 @@ class MigrationRepository extends Repository
     }
 
     /**
+     * @return true
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function removeUnusedElements(): bool
+    {
+        $this->logger->info('Start - fixGridElements');
+
+        $queryBuilder = $this->getQueryBuilder();
+        $pages = $queryBuilder
+            ->select(
+                'uid'
+            )
+            ->from($this->tablePage)
+            ->execute()
+            ->fetchAllAssociative();
+
+        foreach ($pages as $num => $page) {
+
+            // get all content for page
+            $queryBuilder = $this->getQueryBuilder();
+            $pages[$num]['contents'] = $queryBuilder
+                ->select(
+                    'uid',
+                    'pid',
+                    'colPos',
+                    'CType',
+                    'tx_container_parent',
+                    'tx_gridelements_columns',
+                    'tx_gridelements_container',
+                    'tx_gridelements_backend_layout',
+                    'tx_gridelements_children',
+                    'l18n_parent',
+                    'sys_language_uid',
+                    'deleted',
+                )
+                ->from($this->tableContent)
+                ->where(
+                    $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($page['uid']))
+                )
+                ->execute()
+                ->fetchAllAssociative();
+        }
+
+        // $this->logData(print_r($pages, true));
+
+        $contentsToRemove = [];
+        foreach ($pages as $page) {
+            foreach ($page['contents'] as $content) {
+                if ((int)$content['colPos'] === 0 && (int)$content['tx_gridelements_container'] === 0 && (int)$content['deleted'] === 0) {
+                    continue;
+                }
+
+                /*
+                // check if element is translation
+                if ((int)$content['sys_language_uid'] === 0 && (int)$content['l18n_parent'] === 0) {
+                    // element is not translation
+                    // check if parent element exists
+                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+                } else if ((int)$content['sys_language_uid'] > 0 && (int)$content['l18n_parent'] > 0) {
+                    // element is translation
+                    // check if parent element exists
+                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['l18n_parent']);
+                }
+                */
+
+                $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+
+                if ($parentElementKey !== false) {
+                    continue;
+                }
+
+                $contentsToRemove[] = $content;
+
+                // check if content is grid element
+                if (str_contains($content['cType'], 'gridelements_pi')) {
+
+                    /*
+                    // check if element is translation
+                    if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
+                        // element is not translation
+                        // check if parent grid element exists
+                        $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
+                    } else {
+                        // element is translation
+                        // check if parent grid element exists
+                        $childElementKeys = $this->searchElement($page['contents'], 'l18n_parent', $content['uid']);
+                    }
+                    */
+
+                    $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
+
+                    // children element not found
+                    if ($childElementKeys === false) {
+                        continue;
+                    }
+
+                    foreach ($childElementKeys as $childElementKey) {
+                        $contentsToRemove[] = $page['contents'][$childElementKey];
+                    }
+                }
+            }
+        }
+
+        foreach ($contentsToRemove as $contentToRemove) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->delete($this->tableContent)
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentToRemove['uid'])))
+                ->execute();
+
+            $this->logData(
+                'Content removed',
+                $contentToRemove
+            );
+        }
+
+        return true;
+    }
+    /**
      * @return bool
      * @throws DBALException
      * @throws Exception
@@ -60,6 +179,49 @@ class MigrationRepository extends Repository
     }
 
     /**
+     * @return bool
+     * @throws DBALException
+     * @throws Exception
+     */
+    public function logColPosErrors(): bool
+    {
+        $this->logger->info('Start logColPosErrors');
+
+        $queryBuilder = $this->getQueryBuilder();
+        $elements = $queryBuilder
+            ->select(
+                'uid',
+                'pid',
+                'colPos',
+                'CType',
+                'tx_container_parent',
+                'tx_gridelements_columns',
+                'tx_gridelements_container',
+                'tx_gridelements_backend_layout',
+                'tx_gridelements_children',
+                'l18n_parent',
+                'sys_language_uid',
+                'deleted',
+            )
+            ->from($this->tableContent)
+            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
+            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->execute()
+            ->fetchAllAssociative();
+
+        if (count($elements) > 0) {
+            foreach ($elements as $element) {
+                $this->logData('Error data', $element);
+            }
+        } else {
+            $this->logger->info('No rows found with invalid colPos value');
+        }
+
+        $this->logger->info('End logColPosErrors');
+        return true;
+    }
+
+    /**
      * @param $configs
      * @return array
      * @throws DBALException
@@ -82,9 +244,7 @@ class MigrationRepository extends Repository
                 'tx_gridelements_children',
                 'tx_container_parent',
                 'l18n_parent',
-                'hidden',
                 'deleted',
-                'header',
                 'pi_flexform',
                 'sys_language_uid ',
             )
@@ -132,9 +292,7 @@ class MigrationRepository extends Repository
                     'tx_gridelements_children',
                     'tx_container_parent',
                     'l18n_parent',
-                    'hidden',
                     'deleted',
-                    'header',
                     'pi_flexform',
                     'sys_language_uid ',
                 )
@@ -274,332 +432,6 @@ class MigrationRepository extends Repository
                 }
             }
         }
-    }
-
-    /**
-     * @return true
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function removeUnusedElements(): bool
-    {
-        $this->logger->info('Start - fixGridElements');
-
-        // get all pages
-        $queryBuilder = $this->getQueryBuilder();
-        $pages = $queryBuilder
-            ->select(
-                'uid'
-            )
-            ->from($this->tablePage)
-            ->execute()
-            ->fetchAllAssociative();
-
-        foreach ($pages as $num => $page) {
-
-            // get all content for page
-            $queryBuilder = $this->getQueryBuilder();
-            $pages[$num]['contents'] = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'CType',
-                    'tx_container_parent',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_container',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_children',
-                    'l18n_parent',
-                    'sys_language_uid',
-                    'hidden',
-                    'deleted',
-                )
-                ->from($this->tableContent)
-                ->where(
-                    $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($page['uid']))
-                )
-                ->execute()
-                ->fetchAllAssociative();
-        }
-
-        // $this->logData(print_r($pages, true));
-
-        $contentsToRemove = [];
-
-        // pages list
-        foreach ($pages as $page) {
-
-            // contents list
-            // $pages[$pageKey]['uid'] => page id (int)
-            // $pages[$pageKey]['contents'] => contents (array)
-            foreach ($page['contents'] as $content) {
-
-                // content
-                // $pages[$pageKey]['contents'][$contentKey] => content (array)
-                // $pages[$pageKey]['contents'][$contentKey]['uid'] => content id (int)
-                // $pages[$pageKey]['contents'][$contentKey]['pid'] => page id (int)
-                // $pages[$pageKey]['contents'][$contentKey]['colPos'] => page id (int)
-                // ...
-
-                // element is not grid element
-                // check if element is in root position
-                if ((int)$content['colPos'] === 0 && (int)$content['tx_gridelements_container'] === 0) {
-                    // element is in root position
-                    continue;
-                }
-
-                /*
-                // check if element is translation
-                if ((int)$content['sys_language_uid'] === 0 && (int)$content['l18n_parent'] === 0) {
-                    // element is not translation
-                    // check if parent element exists
-                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
-                } else if ((int)$content['sys_language_uid'] > 0 && (int)$content['l18n_parent'] > 0) {
-                    // element is translation
-                    // check if parent element exists
-                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['l18n_parent']);
-                }
-                */
-
-                $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
-
-                if ($parentElementKey !== false) {
-                    // parent element exists
-                    continue;
-                }
-
-                // parent element not exists
-                // add element to list for remove it
-                $contentsToRemove[] = $content;
-
-                // check if content is grid element
-                if (str_contains($content['cType'], 'gridelements_pi')) {
-
-                    /*
-                    // check if element is translation
-                    if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
-                        // element is not translation
-                        // check if parent grid element exists
-                        $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
-                    } else {
-                        // element is translation
-                        // check if parent grid element exists
-                        $childElementKeys = $this->searchElement($page['contents'], 'l18n_parent', $content['uid']);
-                    }
-                    */
-
-                    $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
-
-                    // children element not found
-                    if ($childElementKeys === false) {
-                        continue;
-                    }
-
-                    foreach ($childElementKeys as $childElementKey) {
-                        // add child element to list for remove it
-                        $contentsToRemove[] = $page['contents'][$childElementKey];
-                    }
-                }
-            }
-        }
-
-        foreach ($contentsToRemove as $contentToRemove) {
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->delete($this->tableContent)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($contentToRemove['uid'])))
-                ->execute();
-
-            $this->logData(
-                'Content removed',
-                $contentToRemove
-            );
-        }
-
-        return true;
-    }
-
-    /**
-     * @return bool
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function removeAllColPosErrors(): bool
-    {
-        $this->logger->info('Start - removeAllColPosErrors');
-
-        $queryBuilder = $this->getQueryBuilder();
-        $elements = $queryBuilder
-            ->select(
-                'uid',
-                'pid',
-                'colPos',
-                'backupColPos',
-                'CType',
-                'tx_container_parent',
-                'tx_gridelements_columns',
-                'tx_gridelements_container',
-                'tx_gridelements_backend_layout',
-                'tx_gridelements_children',
-                'l18n_parent',
-                'sys_language_uid',
-                'hidden',
-                'deleted',
-                'header',
-            )
-            ->from($this->tableContent)
-            ->where(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
-            )
-            ->orWhere(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2))
-            )
-            ->orWhere(
-                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(1))
-            )
-            ->execute()
-            ->fetchAllAssociative();
-
-        foreach ($elements as $element) {
-
-            if ((int)$element['sys_language_uid'] > 0 && isset($element['l18n_parent']) && (int)$element['l18n_parent'] > 0) {
-                $fieldName = 'l18n_parent';
-            } else {
-                $fieldName = 'tx_gridelements_container';
-            }
-
-            $queryBuilder = $this->getQueryBuilder();
-            $children = $queryBuilder
-                ->select(
-                    'uid',
-                    'pid',
-                    'colPos',
-                    'backupColPos',
-                    'CType',
-                    'tx_container_parent',
-                    'tx_gridelements_columns',
-                    'tx_gridelements_container',
-                    'tx_gridelements_backend_layout',
-                    'tx_gridelements_children',
-                    'l18n_parent',
-                    'sys_language_uid',
-                    'hidden',
-                    'deleted',
-                    'header',
-                )
-                ->from($this->tableContent)
-                ->where(
-                    $queryBuilder->expr()->eq($fieldName, $queryBuilder->createNamedParameter($element['uid']))
-                )
-                ->execute()
-                ->fetchAllAssociative();
-
-            foreach ($children as $child) {
-                $elements[] = $child;
-            }
-        }
-
-        foreach ($elements as $element) {
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->delete($this->tableContent)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
-                ->execute();
-
-            $this->logData(
-                'Remove colPos Errors id=' . $element['uid'],
-                $element
-            );
-        }
-
-        $queryBuilder = $this->getQueryBuilder();
-        $elements = $queryBuilder
-            ->select(
-                'uid',
-                'pid',
-                'colPos',
-                'backupColPos',
-                'CType',
-                'tx_container_parent',
-                'tx_gridelements_columns',
-                'tx_gridelements_container',
-                'tx_gridelements_backend_layout',
-                'tx_gridelements_children',
-                'l18n_parent',
-                'sys_language_uid',
-                'hidden',
-                'deleted',
-                'header',
-            )
-            ->from($this->tableContent)
-            ->where(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1))
-            )
-            ->orWhere(
-                $queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2))
-            )
-            ->execute()
-            ->fetchAllAssociative();
-
-        foreach ($elements as $element) {
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->delete($this->tableContent)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($element['uid'])))
-                ->execute();
-
-            $this->logData(
-                'Remove other colPos Errors id=' . $element['uid'],
-                $element
-            );
-        }
-
-        $this->logger->info('End - removeAllColPosErrors');
-        return true;
-    }
-
-    /**
-     * @return bool
-     * @throws DBALException
-     * @throws Exception
-     */
-    public function logColPosErrors(): bool
-    {
-        $this->logger->info('Start logColPosErrors');
-
-        $queryBuilder = $this->getQueryBuilder();
-        $elements = $queryBuilder
-            ->select(
-                'uid',
-                'pid',
-                'colPos',
-                'backupColPos',
-                'CType',
-                'tx_container_parent',
-                'tx_gridelements_columns',
-                'tx_gridelements_container',
-                'tx_gridelements_backend_layout',
-                'tx_gridelements_children',
-                'l18n_parent',
-                'sys_language_uid',
-                'hidden',
-                'deleted',
-                'header',
-            )
-            ->from($this->tableContent)
-            ->where($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-1)))
-            ->orWhere($queryBuilder->expr()->eq('colPos', $queryBuilder->createNamedParameter(-2)))
-            ->execute()
-            ->fetchAllAssociative();
-
-        if (count($elements) > 0) {
-            foreach ($elements as $element) {
-                $this->logData('Error data', $element);
-            }
-        } else {
-            $this->logger->info('No rows found with invalid colPos value');
-        }
-
-        $this->logger->info('End logColPosErrors');
-        return true;
     }
 
     /**
