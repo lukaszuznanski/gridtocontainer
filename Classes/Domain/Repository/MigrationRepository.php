@@ -78,31 +78,28 @@ class MigrationRepository extends Repository
                 ->fetchAllAssociative();
         }
 
-        // $this->logData(print_r($pages, true));
-
         $contentsToRemove = [];
         foreach ($pages as $page) {
             foreach ($page['contents'] as $content) {
-                if ((int)$content['colPos'] === 0 && (int)$content['tx_gridelements_container'] === 0 && (int)$content['deleted'] === 0) {
+
+                // check for broken grid element row
+                $contentBroken = false;
+                if (($content['tx_gridelements_backend_layout'] === null && str_contains($content['cType'], 'gridelements_pi'))
+                    || ($content['tx_gridelements_backend_layout'] !== null && !str_contains($content['cType'], 'gridelements_pi'))) {
+                    $contentBroken = true;
+                    $contentsToRemove[] = $content;
+                }
+
+                if ((int)$content['colPos'] === 0
+                    && (int)$content['tx_gridelements_container'] === 0
+                    && (int)$content['deleted'] === 0
+                    && $contentBroken === false) {
                     continue;
                 }
 
-                /*
-                // check if element is translation
-                if ((int)$content['sys_language_uid'] === 0 && (int)$content['l18n_parent'] === 0) {
-                    // element is not translation
-                    // check if parent element exists
-                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
-                } else if ((int)$content['sys_language_uid'] > 0 && (int)$content['l18n_parent'] > 0) {
-                    // element is translation
-                    // check if parent element exists
-                    $parentElementKeys = $this->searchElement($page['contents'], 'uid', $content['l18n_parent']);
-                }
-                */
-
                 $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
 
-                if ($parentElementKey !== false) {
+                if ($parentElementKey !== false && $contentBroken === false) {
                     continue;
                 }
 
@@ -111,23 +108,9 @@ class MigrationRepository extends Repository
                 // check if content is grid element
                 if (str_contains($content['cType'], 'gridelements_pi')) {
 
-                    /*
-                    // check if element is translation
-                    if ((int)$content['sys_language_uid'] === 0 && $content['l18n_parent'] > 0) {
-                        // element is not translation
-                        // check if parent grid element exists
-                        $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
-                    } else {
-                        // element is translation
-                        // check if parent grid element exists
-                        $childElementKeys = $this->searchElement($page['contents'], 'l18n_parent', $content['uid']);
-                    }
-                    */
-
                     $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
 
-                    // children element not found
-                    if ($childElementKeys === false) {
+                    if ($childElementKeys === false && $contentBroken === false) {
                         continue;
                     }
 

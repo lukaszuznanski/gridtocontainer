@@ -14,17 +14,12 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class LogColPosErrorsCommand extends Command
 {
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
     protected function configure(): void
     {
         $this->setHelp('Log colPos < 0 n tt_content');
     }
 
     /**
-     * Executes the command to migrate the elements
-     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int error code

@@ -26,16 +26,12 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class MigrateAllCommand extends Command
 {
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
     protected function configure(): void
     {
         $this->setHelp('Migrate gridelements to container');
     }
 
     /**
-     * Executes the command to migrate the elements
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int

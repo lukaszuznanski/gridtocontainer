@@ -16,7 +16,7 @@ class RemoveUnusedElementsCommand extends Command
 {
     protected function configure(): void
     {
-        $this->setHelp('Fix colPos in tt_content');
+        $this->setHelp('Remove unused contend and broken elements');
     }
 
     /**
@@ -30,7 +30,7 @@ class RemoveUnusedElementsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->writeln('Remove Unused Contend elements from tt_content starts now');
+        $io->writeln('Remove unused contend and broken elements starts now');
 
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         $migrationRepository = $objectManager->get(MigrationRepository::class);
@@ -38,11 +38,11 @@ class RemoveUnusedElementsCommand extends Command
         $migrateAll = $migrationRepository->removeUnusedElements();
 
         if ($migrateAll) {
-            $io->writeln('Remove Unused Contend elements from tt_content is completed');
+            $io->writeln('Remove unused contend and broken elements is completed');
             return 0;
         }
 
-        $io->writeln('Remove Unused Contend elements from in tt_content is failed');
+        $io->writeln('Remove unused contend and broken elements is failed');
         return 1;
     }
 }
