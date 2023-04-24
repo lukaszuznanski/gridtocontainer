@@ -258,7 +258,11 @@ class MigrationRepository extends Repository
     {
         $this->logData('Start getGridsContainerContents');
 
-        $contentElementsResult = [];
+        $contentElementsResult = [
+            'contentList' => [],
+            'parentsList' => [],
+        ];
+
         foreach ($gridElements as $gridElement) {
             $queryBuilder = $this->getQueryBuilder();
             $childrenElements = $queryBuilder
