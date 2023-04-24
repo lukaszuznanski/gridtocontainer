@@ -79,12 +79,21 @@ class MigrationRepository extends Repository
         }
 
         $contentsToRemove = [];
+
         foreach ($pages as $page) {
+            $runCount = 0;
+
             foreach ($page['contents'] as $content) {
+
+                if ($runCount > 3) {
+                    break;
+                }
+
+                $runCount++;
 
                 // check for broken grid element row
                 $contentIsBroken = false;
-                if (!empty($content['tx_gridelements_backend_layout']) && !str_contains($content['cType'], 'gridelements_pi')) {
+                if ((string)$content['tx_gridelements_backend_layout'] === '' && str_contains($content['CType'], 'gridelements_pi')) {
                     $contentIsBroken = true;
                     $contentsToRemove[] = $content;
                 }
@@ -105,7 +114,7 @@ class MigrationRepository extends Repository
                 $contentsToRemove[] = $content;
 
                 // check if content is grid element
-                if (str_contains($content['cType'], 'gridelements_pi')) {
+                if (str_contains($content['CType'], 'gridelements_pi')) {
 
                     $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
 
@@ -427,7 +436,7 @@ class MigrationRepository extends Repository
     {
         return [
             [
-                'cType' => 'fullwidthcompontent',   // cType / grid element type / b13/container type
+                'CType' => 'fullwidthcompontent',   // CType / grid element type / b13/container type
                 'colPos' => [
                     [
                         'gridColPos' => 0,         // grid element colPos
@@ -440,7 +449,7 @@ class MigrationRepository extends Repository
                 ]
             ],
             [
-                'cType' => '1-2_1-2',
+                'CType' => '1-2_1-2',
                 'colPos' => [
                     [
                         'gridColPos' => 0,
@@ -453,7 +462,7 @@ class MigrationRepository extends Repository
                 ],
             ],
             [
-                'cType' => '1-4_3-4',
+                'CType' => '1-4_3-4',
                 'colPos' => [
                     [
                         'gridColPos' => 0,
@@ -466,24 +475,7 @@ class MigrationRepository extends Repository
                 ],
             ],
             [
-                'cType' => '1-4_1-4_1-2',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                    [
-                        'gridColPos' => 2,
-                        'containerColPos' => 202,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-2_1-4_1-4',
+                'CType' => '1-4_1-4_1-2',
                 'colPos' => [
                     [
                         'gridColPos' => 0,
@@ -500,29 +492,7 @@ class MigrationRepository extends Repository
                 ],
             ],
             [
-                'cType' => '1-1',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '3-4_1-4',
-                'colPos' => [
-                    [
-                        'gridColPos' => 0,
-                        'containerColPos' => 200,
-                    ],
-                    [
-                        'gridColPos' => 1,
-                        'containerColPos' => 201,
-                    ],
-                ],
-            ],
-            [
-                'cType' => '1-3_1-3_1-3',
+                'CType' => '1-2_1-4_1-4',
                 'colPos' => [
                     [
                         'gridColPos' => 0,
@@ -539,7 +509,46 @@ class MigrationRepository extends Repository
                 ],
             ],
             [
-                'cType' => '1-4_1-4_1-4_1-4',
+                'CType' => '1-1',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                ],
+            ],
+            [
+                'CType' => '3-4_1-4',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                ],
+            ],
+            [
+                'CType' => '1-3_1-3_1-3',
+                'colPos' => [
+                    [
+                        'gridColPos' => 0,
+                        'containerColPos' => 200,
+                    ],
+                    [
+                        'gridColPos' => 1,
+                        'containerColPos' => 201,
+                    ],
+                    [
+                        'gridColPos' => 2,
+                        'containerColPos' => 202,
+                    ],
+                ],
+            ],
+            [
+                'CType' => '1-4_1-4_1-4_1-4',
                 'colPos' => [
                     [
                         'gridColPos' => 0,
@@ -560,7 +569,7 @@ class MigrationRepository extends Repository
                 ],
             ],
             [
-                'cType' => '1-3_2-3',
+                'CType' => '1-3_2-3',
                 'colPos' => [
                     [
                         'gridColPos' => 0,
