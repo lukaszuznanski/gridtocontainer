@@ -155,7 +155,7 @@ class MigrationRepository extends Repository
     protected function getUnusedContentElements(): array
     {
         $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder->select('uid')
+        $queryBuilder->select('uid', 'header')
             ->from('tt_content');
 
         $contentElements = $queryBuilder
@@ -165,7 +165,7 @@ class MigrationRepository extends Repository
         $usedElements = [];
         foreach ($contentElements as $element) {
             $elementUid = $element['uid'];
-            $content = $this->contentObject->getRecords('tt_content', ['uid' => $elementUid]);
+            $content = $this->contentObject->getRecords('tt_content', $elementUid);
             if (empty($content)) {
                 $usedElements[] = $element['uid'];
             }
