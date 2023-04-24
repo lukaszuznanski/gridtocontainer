@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8f24c3847a8686b604d03ec43ed1a347",
+    "content-hash": "f72ce3ff10f769f8f77fe7ebd7542b8e",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -5180,6 +5180,72 @@
                 }
             ],
             "description": "A framework to build extensions for TYPO3 CMS.",
+            "homepage": "https://typo3.org",
+            "support": {
+                "chat": "https://typo3.org/help",
+                "docs": "https://docs.typo3.org",
+                "issues": "https://forge.typo3.org",
+                "source": "https://github.com/typo3/typo3"
+            },
+            "time": "2023-03-14T07:08:04+00:00"
+        },
+        {
+            "name": "typo3/cms-frontend",
+            "version": "v11.5.25",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/TYPO3-CMS/frontend.git",
+                "reference": "8e38ef634d9915c4378fecdf7d1d0f8d20b1cd7c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/TYPO3-CMS/frontend/zipball/8e38ef634d9915c4378fecdf7d1d0f8d20b1cd7c",
+                "reference": "8e38ef634d9915c4378fecdf7d1d0f8d20b1cd7c",
+                "shasum": ""
+            },
+            "require": {
+                "ext-libxml": "*",
+                "symfony/polyfill-mbstring": "^1.23.1",
+                "typo3/cms-core": "11.5.25"
+            },
+            "conflict": {
+                "typo3/cms": "*"
+            },
+            "suggest": {
+                "typo3/cms-adminpanel": "Provides additional information and functionality for backend users in the frontend."
+            },
+            "type": "typo3-cms-framework",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "11.5.x-dev"
+                },
+                "typo3/cms": {
+                    "Package": {
+                        "serviceProvider": "TYPO3\\CMS\\Frontend\\ServiceProvider",
+                        "protected": true,
+                        "partOfFactoryDefault": true,
+                        "partOfMinimalUsableSystem": true
+                    },
+                    "extension-key": "frontend"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "TYPO3\\CMS\\Frontend\\": "Classes/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "TYPO3 Core Team",
+                    "email": "typo3cms@typo3.org",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Classes for the frontend of TYPO3.",
             "homepage": "https://typo3.org",
             "support": {
                 "chat": "https://typo3.org/help",

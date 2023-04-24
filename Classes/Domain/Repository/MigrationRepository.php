@@ -10,9 +10,10 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Extbase\Persistence\Repository;
 use Psr\Log\LoggerAwareTrait;
-use \TYPO3\CMS\Core\Log\LogManager;
-use \TYPO3\CMS\Core\Core\Environment;
-use \TYPO3\CMS\Core\Log\Writer\FileWriter;
+use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Log\Writer\FileWriter;
+use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 class MigrationRepository extends Repository
 {
@@ -78,6 +79,8 @@ class MigrationRepository extends Repository
                 ->fetchAllAssociative();
         }
 
+        $unusedContentElements = $this->getUnusedContentElements();
+
         $contentsToRemove = [];
 
         foreach ($pages as $page) {
@@ -98,8 +101,9 @@ class MigrationRepository extends Repository
                 }
 
                 $parentElementKey = $this->searchElement($page['contents'], 'uid', $content['tx_gridelements_container']);
+                $unusedElementKey = $this->searchElement($unusedContentElements, 'uid', $content['uid']);
 
-                if ($parentElementKey !== false && !$contentIsBroken) {
+                if ($parentElementKey !== false && $unusedElementKey !== false && !$contentIsBroken) {
                     continue;
                 }
 
@@ -109,8 +113,9 @@ class MigrationRepository extends Repository
                 if (str_contains($content['CType'], 'gridelements_pi')) {
 
                     $childElementKeys = $this->searchElement($page['contents'], 'tx_gridelements_container', $content['uid']);
+                    $unusedElementKey = $this->searchElement($unusedContentElements, 'uid', $content['uid']);
 
-                    if ($childElementKeys === false && !$contentIsBroken) {
+                    if ($childElementKeys === false && $unusedElementKey === false) {
                         continue;
                     }
 
@@ -135,6 +140,41 @@ class MigrationRepository extends Repository
 
         return true;
     }
+
+    private ?ContentObjectRenderer $contentObject = null;
+
+    public function injectContentObjectRenderer(ContentObjectRenderer $contentObject): void
+    {
+        $this->contentObject = $contentObject;
+    }
+
+    /**
+     * @throws DBALException
+     * @throws Exception
+     */
+    protected function getUnusedContentElements(): array
+    {
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->select('uid')
+            ->from('tt_content');
+
+        $contentElements = $queryBuilder
+            ->execute()
+            ->fetchAllAssociative();
+
+        $usedElements = [];
+        foreach ($contentElements as $element) {
+            $elementUid = $element['uid'];
+            $content = $this->contentObject->getRecords('tt_content', ['uid' => $elementUid]);
+            if (empty($content)) {
+                $usedElements[] = $element['uid'];
+            }
+        }
+
+        return $usedElements;
+    }
+
+
     /**
      * @return bool
      * @throws DBALException
