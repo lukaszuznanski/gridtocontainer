@@ -145,6 +145,14 @@ class MigrationRepository extends Repository
             );
         }
 
+        // fix colPos -1 and -2, set to colPos 999
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->update($this->tableContent)
+            ->where($queryBuilder->expr()->gt('colPos', $queryBuilder->createNamedParameter(-1)))
+            ->OrWhere($queryBuilder->expr()->gt('colPos', $queryBuilder->createNamedParameter(-2)))
+            ->set('colPos', 999)
+            ->execute();
+
         return true;
     }
 
