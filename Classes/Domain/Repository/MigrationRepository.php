@@ -388,6 +388,13 @@ class MigrationRepository extends Repository
                 $gridElement
             );
         }
+
+        // FIX fullwidthcompontent >> fullwidthcomponent
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder->update($this->tableContent)
+            ->where($queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter('fullwidthcompontent')))
+            ->set('CType', 'fullwidthcomponent')
+            ->execute();
     }
 
     /**
